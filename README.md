@@ -1,4 +1,4 @@
-Bandwidth Application Platform SDK
+Bandwidth Communication SDK
 ====
 
 A Rust SDK for [Bandwidth's Communication API](https://catapult.inetwork.com)
