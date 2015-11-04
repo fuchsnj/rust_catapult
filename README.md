@@ -5,6 +5,8 @@ Bandwidth Communication SDK
 A Rust SDK for [Bandwidth's Communication API](https://catapult.inetwork.com)
 that focuses on ease of use and efficiency.
 
+Note that this SDK is not yet feature complete, and is still undergoing major changes.
+
 ## Documentation
 
 http://bandwidthcom.github.io/rust-bandwidth
