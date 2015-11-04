@@ -2,7 +2,7 @@ Bandwidth Communication SDK
 ====
 [![Build Status](https://travis-ci.org/bandwidthcom/rust-bandwidth.svg?branch=master)](https://travis-ci.org/bandwidthcom/rust-bandwidth)
 
-A Rust SDK for [Bandwidth's Communication API](https://catapult.inetwork.com)
+A Rust SDK for [Bandwidth's Communication API](http://ap.bandwidth.com/)
 that focuses on ease of use and efficiency.
 
 Note that this SDK is not yet feature complete, and is still undergoing major changes.
