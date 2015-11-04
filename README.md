@@ -6,10 +6,7 @@ that focuses on ease of use and efficiency.
 
 ## Documentation
 
-This will eventually be hosted. For now you can generate documentation locally
-```
-cargo doc
-```
+http://bandwidthcom.github.io/rust-bandwidth
 
 ## Usage
 
