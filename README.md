@@ -1,7 +1,7 @@
 Bandwidth Communication SDK
 ====
 
-A Rust SDK for [Bandwidth's Communication API](https://catapult.inetwork.com)
+A Rust SDK for [Bandwidth's Communication API](http://ap.bandwidth.com/)
 that focuses on ease of use and efficiency.
 
 ## Documentation
