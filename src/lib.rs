@@ -1,3 +1,4 @@
+#![doc(html_logo_url = "https://raw.githubusercontent.com/bandwidthcom/rust-bandwidth/master/img/bandwidth.jpg")]
 #![feature(custom_attribute, custom_derive, plugin)]
 #![plugin(json_macros)]
 
