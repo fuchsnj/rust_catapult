@@ -17,7 +17,7 @@ This will be uploaded to crates.io when it is more stable.
 For now, add the following to your `Cargo.toml`
 
 ```toml
-[dependencies.bandwidth]
+[dependencies.bandwidth_communication]
 git = "https://github.com/bandwidthcom/rust-bandwidth"
 ```
 
