@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use util;
 use call::Call;
 use self::info::BridgeInfo;
+use rustc_serialize::json::ToJson;
 
 pub struct Bridge{
 	id: String,
@@ -69,10 +70,12 @@ impl Bridge{
 	}
 	pub fn create(client: &Client, bridge_audio: bool, call_ids: &Vec<String>) -> BResult<Bridge>{
 		let path = "users/".to_string() + &client.get_user_id() + "/bridges";
+		
 		let json = json!({
-			"bridgeAudio": (bridge_audio),
-			"callIds": (call_ids)
+			"bridgeAudio" => (bridge_audio),
+			"callIds" => (call_ids)
 		});
+		
 		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Bridge{
@@ -92,8 +95,8 @@ impl Bridge{
 	pub fn update(&self, bridge_audio: bool, call_ids: &Vec<String>) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
-			"bridgeAudio": (bridge_audio),
-			"callIds": (call_ids)
+			"bridgeAudio" => (bridge_audio),
+			"callIds" => (call_ids)
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -102,7 +105,7 @@ impl Bridge{
 	pub fn remove_all_calls(&self) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
-			"callIds": (Vec::<String>::new())
+			"callIds" => (Vec::<String>::new())
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -110,7 +113,7 @@ impl Bridge{
 	pub fn enable_audio(&self, enable: bool) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
-			"bridgeAudio": (enable)
+			"bridgeAudio" => (enable)
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -118,8 +121,8 @@ impl Bridge{
 	pub fn play_audio_file(&self, url: &str, loop_audio: bool) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id + "/audio";
 		let json = json!({
-			"fileUrl": (url),
-			"loopEnabled": (loop_audio)
+			"fileUrl" => (url),
+			"loopEnabled" => (loop_audio)
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())

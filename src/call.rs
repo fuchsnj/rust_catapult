@@ -8,6 +8,7 @@ use lazy::Lazy;
 use lazy::Lazy::*;
 use self::info::CallInfo;
 use rustc_serialize::json::Json;
+use rustc_serialize::json::ToJson;
 use voice::Voice;
 
 
@@ -245,19 +246,19 @@ impl CallBuilder{
 	pub fn dial(&self) -> BResult<Call>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
 		let json = json!({
-			"from": (self.from),
-			"to": (self.to),
-			"callTimeout": (self.config.call_timeout),
-			"callbackUrl": (self.config.callback_url),
-			"callbackTimeout": (self.config.callback_timeout),
-			"callbackHttpMethod": (self.config.callback_http_method),
-			"fallbackUrl": (self.config.fallback_url),
-			"bridgeId": (self.config.bridge_id),
-			"conferenceId": (self.config.conference_id),
-			"recordingEnabled": (self.config.recording_enabled),
-			"recordingMaxDuration": (self.config.recording_max_duration),
-			"transcriptionEnabled": (self.config.transcription_enabled),
-			"tag": (self.config.tag)
+			"from" => (self.from),
+			"to" => (self.to),
+			"callTimeout" => (self.config.call_timeout),
+			"callbackUrl" => (self.config.callback_url),
+			"callbackTimeout" => (self.config.callback_timeout),
+			"callbackHttpMethod" => (self.config.callback_http_method),
+			"fallbackUrl" => (self.config.fallback_url),
+			"bridgeId" => (self.config.bridge_id),
+			"conferenceId" => (self.config.conference_id),
+			"recordingEnabled" => (self.config.recording_enabled),
+			"recordingMaxDuration" => (self.config.recording_max_duration),
+			"transcriptionEnabled" => (self.config.transcription_enabled),
+			"tag" => (self.config.tag)
 		});
 		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
@@ -365,7 +366,7 @@ impl Call{
 		data.state = NotLoaded;
 		data.end_time = NotLoaded;
 		self.update(&json!({
-			"state": "completed"
+			"state" => "completed"
 		}))
 	}
 	
@@ -374,7 +375,7 @@ impl Call{
 		data.state = NotLoaded;
 		data.active_time = NotLoaded;
 		self.update(&json!({
-			"state": "active"
+			"state" => "active"
 		}))
 	}
 	pub fn reject_incoming(&self) -> BResult<()>{
@@ -382,7 +383,7 @@ impl Call{
 		data.state = NotLoaded;
 		data.active_time = NotLoaded;
 		self.update(&json!({
-			"state": "rejected"
+			"state" => "rejected"
 		}))
 	}
 	pub fn enable_recording(&self, enable: bool) -> BResult<()>{
@@ -391,15 +392,15 @@ impl Call{
 		data.recording_enabled = Available(enable);
 		data.transcription_enabled = NotLoaded;
 		self.update(&json!({
-			"recordingEnabled": (enable)
+			"recordingEnabled" => (enable)
 		}))
 	}
 	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
-			"fileUrl": (url),
-			"loopEnabled": (loop_audio),
-			"tag": (tag.map(|a|a.to_string()))
+			"fileUrl" => (url),
+			"loopEnabled" => (loop_audio),
+			"tag" => (tag.map(|a|a.to_string()))
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -407,7 +408,7 @@ impl Call{
 	pub fn stop_audio_file(&self) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
-			"fileUrl": ""
+			"fileUrl" => ""
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -415,10 +416,10 @@ impl Call{
 	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
-			"sentence": (sentence),
-			"loopEnabled": (loop_audio),
-			"voice": (voice.get_name()),
-			"tag": (tag.map(|a|a.to_string()))
+			"sentence" => (sentence),
+			"loopEnabled" => (loop_audio),
+			"voice" => (voice.get_name()),
+			"tag" => (tag.map(|a|a.to_string()))
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -426,7 +427,7 @@ impl Call{
 	pub fn send_dtmf(&self, digits: &str) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/dtmf";
 		let json = json!({
-			"dtmfOut": (digits)
+			"dtmfOut" => (digits)
 		});
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
@@ -438,27 +439,27 @@ impl Call{
 			match prompt.prompt_type{
 				GatherPromptType::Sentence{text, voice} => {
 					json!({
-						"sentence": (text),
-						"loopEnabled": (prompt.loop_audio),
-						"bargeable": (prompt.bargeable),
-						"voice": (voice.get_name())
+						"sentence" => (text),
+						"loopEnabled" => (prompt.loop_audio),
+						"bargeable" => (prompt.bargeable),
+						"voice" => (voice.get_name())
 					})
 				},
 				GatherPromptType::File{url} => {
 					json!({
-						"fileUrl": (url),
-						"loopEnabled": (prompt.loop_audio),
-						"bargeable": (prompt.bargeable)
+						"fileUrl" => (url),
+						"loopEnabled" => (prompt.loop_audio),
+						"bargeable" => (prompt.bargeable)
 					})
 				}
 			}
 		});
 		let json = json!({
-			"maxDigits": (config.max_digits),
-			"interDigitTimeout": (config.inter_digit_timeout),
-			"terminatingDigits": (config.terminating_digits),
-			"tag": (config.tag),
-			"prompt": (prompt)
+			"maxDigits" => (config.max_digits),
+			"interDigitTimeout" => (config.inter_digit_timeout),
+			"terminatingDigits" => (config.terminating_digits),
+			"tag" => (config.tag),
+			"prompt" => (prompt)
 		});
 		
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));

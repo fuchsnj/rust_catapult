@@ -1,11 +1,21 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/bandwidthcom/rust-bandwidth/master/img/bandwidth.jpg")]
-#![feature(custom_attribute, custom_derive, plugin)]
-#![plugin(json_macros)]
-
 
 extern crate hyper;
 extern crate rustc_serialize;
 extern crate url;
+
+macro_rules! json {
+  (null) => (json::Null);
+  ([ $($values:tt),* ]) => (json::List(vec![ $(json!($values)),* ]));
+  ({ $($keys:expr => $values:tt),* }) => ({
+    let kv_pairs = vec![ $(($keys.to_string(), json!($values))),* ];
+    ::rustc_serialize::json::Json::Object(kv_pairs.into_iter().collect())
+  });
+  ($ex:expr) => ({
+  	  use ::rustc_serialize::json::ToJson;
+	  $ex.to_json()
+  });
+}
 
 pub mod client;
 pub mod application;
