@@ -9,14 +9,21 @@ use hyper::Url;
 use util;
 use hyper::client::RequestBuilder;
 use call_event::CallEvent;
+use std::sync::{Mutex, Arc};
+use environment::Environment;
+use domain::Domain;
 
 #[derive(Clone)]
 pub struct Client{
+	data: Arc<Mutex<Data>>
+}
+
+struct Data{
 	user_id: String,
 	api_token: String,
 	api_secret: String,
-	base_url: String,
-	api_version: String
+	api_version: String,
+	environment: Environment
 }
 
 pub trait ApiResponse<T>{
@@ -57,15 +64,18 @@ impl ApiResponse<EmptyResponse> for EmptyResponse{
 impl Client{
 	pub fn new(user_id: &str, api_token: &str, api_secret: &str) -> Client{
 		Client{
-			user_id: user_id.to_string(),
-			api_token: api_token.to_string(),
-			api_secret: api_secret.to_string(),
-			base_url: "https://api.catapult.inetwork.com".to_string(),
-			api_version: "v1".to_string()
+			data: Arc::new(Mutex::new(Data{
+				user_id: user_id.to_string(),
+				api_token: api_token.to_string(),
+				api_secret: api_secret.to_string(),
+				api_version: "v1".to_string(),
+				environment: Environment::Production
+			}))
 		}
 	}
 	pub fn create_url(&self, path: &str) -> String{
-		self.base_url.clone() + "/" + &self.api_version + "/" + path 
+		let data = self.data.lock().unwrap();
+		data.environment.get_base_url() + "/" + &data.api_version + "/" + path 
 	}
 	
 	pub fn raw_post_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
@@ -116,19 +126,43 @@ impl Client{
 			Err(BError::api_error(&data))
 		}
 	}
+	/* Setters */
+	pub fn set_environment(&self, env: Environment){
+		let mut data = self.data.lock().unwrap();
+		data.environment = env;
+	}
 	
+	/* Getters */
 	pub fn get_user_id(&self) -> String{
-		self.user_id.clone()
+		let data = self.data.lock().unwrap();
+		data.user_id.clone()
 	}
 	pub fn get_api_token(&self) -> String{
-		self.api_token.clone()
+		let data = self.data.lock().unwrap();
+		data.api_token.clone()
 	}
 	pub fn get_api_secret(&self) -> String{
-		self.api_secret.clone()
+		let data = self.data.lock().unwrap();
+		data.api_secret.clone()
 	}
 	
 	/* Object Helpers */
+	
 	pub fn parse_call_event(&self, data: &str) -> BResult<CallEvent>{
 		CallEvent::parse(self, data)
+	}
+	
+	// Domain
+	pub fn create_domain(&self, name: &str) -> BResult<Domain>{
+		Domain::create(self, name)
+	}
+	pub fn get_domain(&self, id: &str) -> Domain{
+		Domain::get(self, id)
+	}
+	pub fn get_domain_by_name(&self, name: &str) -> BResult<Option<Domain>>{
+		Domain::get_by_name(self, name)
+	}
+	pub fn list_domains(&self) -> BResult<Vec<Domain>>{
+		Domain::list(self)
 	}
 }

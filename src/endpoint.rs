@@ -150,7 +150,7 @@ impl Endpoint{
 		self.id.clone()
 	}
 	pub fn get_domain(&self) -> Domain{
-		Domain::get_by_id(&self.client, &self.domain_id)
+		self.client.get_domain(&self.domain_id)
 	}
 	pub fn get_client(&self) -> Client{
 		self.client.clone()

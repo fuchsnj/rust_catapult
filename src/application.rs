@@ -6,6 +6,7 @@ use lazy::Lazy::*;
 use std::sync::{Arc, Mutex};
 use std::collections::BTreeMap;
 use rustc_serialize::json::{Json, ToJson};
+use error::BError;
 use self::info::ApplicationInfo;
 
 pub struct Application{
@@ -73,6 +74,12 @@ mod info{
 
 impl Application{  
 	pub fn load(&self) -> BResult<()>{
+		
+		//if id = empty string, this will return all apps
+		if self.get_id().len() == 0{
+			return Err(BError::bad_input("invalid app id"))
+		}
+		
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
 		let res:JsonResponse<ApplicationInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();

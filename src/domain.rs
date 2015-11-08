@@ -3,6 +3,7 @@ use client::{JsonResponse, EmptyResponse};
 use std::sync::{Mutex, Arc};
 use lazy::Lazy;
 use util;
+use error::BError;
 
 pub struct Domain{
 	id: String,
@@ -23,6 +24,11 @@ struct DomainInfo{
 
 impl Domain{
 	fn load(&self) -> BResult<()>{
+		//if id = empty string, this will return all domains
+		if self.get_id().len() == 0{
+			return Err(BError::bad_input("invalid app id"))
+		}
+		
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.id;
 		let res:JsonResponse<DomainInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -43,7 +49,7 @@ impl Domain{
 			})) 
 		})
 	}
-	pub fn get_by_id(client: &Client, id: &str) -> Domain{
+	pub fn get(client: &Client, id: &str) -> Domain{
 		Domain{
 			id: id.to_string(),
 			client: client.clone(),

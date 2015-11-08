@@ -10,12 +10,7 @@ use self::info::CallInfo;
 use rustc_serialize::json::Json;
 use voice::Voice;
 
-#[derive(Clone)]
-pub struct Call{
-	id: String,
-	client: Client,
-	data: Arc<Mutex<Data>> 
-}
+
 
 #[derive(Clone)]
 pub enum State{
@@ -103,36 +98,7 @@ mod info{
 	}
 }
 
-pub struct Config{
-	pub call_timeout: Option<u64>,
-	pub callback_url: Option<String>,
-	pub callback_timeout: Option<u64>,
-	pub callback_http_method: Option<String>,
-	pub fallback_url: Option<String>,
-	pub bridge_id: Option<String>,
-	pub conference_id: Option<String>,
-	pub recording_enabled: Option<bool>,
-	pub recording_max_duration: Option<u64>,
-	pub transcription_enabled: Option<bool>,
-	pub tag: Option<String>	
-}
-impl Config{
-	pub fn new() -> Config{
-		Config{
-			call_timeout: None,
-			callback_url: None,
-			callback_timeout: None,
-			callback_http_method: None,
-			fallback_url: None,
-			bridge_id: None,
-			conference_id: None,
-			recording_enabled: None,
-			recording_max_duration: None,
-			transcription_enabled: None,
-			tag: None	
-		}
-	}
-}
+
 
 #[derive(RustcDecodable)]
 pub struct Event{
@@ -206,46 +172,105 @@ impl GatherConfig{
 	}
 	
 }
-
-
-impl Call{
-	pub fn load(&self) -> BResult<()>{
-		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id;
-		let res:JsonResponse<CallInfo> = try!(self.client.raw_get_request(&path, (), ()));
-		let mut data = self.data.lock().unwrap();
-		*data = try!(Data::from_info(&res.body));
-		Ok(())
+struct Config{
+	pub call_timeout: Option<u64>,
+	pub callback_url: Option<String>,
+	pub callback_timeout: Option<u64>,
+	pub callback_http_method: Option<String>,
+	pub fallback_url: Option<String>,
+	pub bridge_id: Option<String>,
+	pub conference_id: Option<String>,
+	pub recording_enabled: Option<bool>,
+	pub recording_max_duration: Option<u64>,
+	pub transcription_enabled: Option<bool>,
+	pub tag: Option<String>	
+}
+impl Config{
+	pub fn new() -> Config{
+		Config{
+			call_timeout: None,
+			callback_url: None,
+			callback_timeout: None,
+			callback_http_method: None,
+			fallback_url: None,
+			bridge_id: None,
+			conference_id: None,
+			recording_enabled: None,
+			recording_max_duration: None,
+			transcription_enabled: None,
+			tag: None	
+		}
 	}
-
-	pub fn create(client: &Client, from: &str, to: &str, config: &Config) -> BResult<Call>{
-		let path = "users/".to_string() + &client.get_user_id() + "/calls";
+}
+pub struct CallBuilder{
+	client: Client,
+	from: String,
+	to: String,
+	config: Config
+}
+impl CallBuilder{
+	pub fn call_timeout(mut self, secs: u64) -> Self{
+		self.config.call_timeout = Some(secs); self
+	}
+	pub fn callback_url(mut self, url: &str) -> Self{
+		self.config.callback_url = Some(url.to_owned()); self
+	}
+	pub fn callback_timeout(mut self, millis: u64) -> Self{
+		self.config.callback_timeout = Some(millis); self
+	}
+	pub fn callback_http_method(mut self, method: &str) -> Self{
+		self.config.callback_http_method = Some(method.to_owned()); self 
+	}
+	pub fn fallback_url(mut self, url: &str) -> Self{
+		self.config.fallback_url = Some(url.to_owned()); self
+	}
+	pub fn bridge_id(mut self, id: &str) -> Self{
+		self.config.bridge_id = Some(id.to_owned()); self
+	}
+	pub fn conference_id(mut self, id: &str) -> Self{
+		self.config.conference_id = Some(id.to_owned()); self
+	}
+	pub fn recording_enabled(mut self, val: bool) -> Self{
+		self.config.recording_enabled = Some(val); self
+	}
+	pub fn recording_max_duration(mut self, duration: u64) -> Self{
+		self.config.recording_max_duration = Some(duration); self
+	}
+	pub fn transcription_enabled(mut self, enabled: bool) -> Self{
+		self.config.transcription_enabled = Some(enabled); self
+	}
+	pub fn tag(mut self, tag: &str) -> Self{
+		self.config.tag = Some(tag.to_owned()); self
+	}
+	pub fn dial(&self) -> BResult<Call>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
 		let json = json!({
-			"from": (from),
-			"to": (to),
-			"callTimeout": (config.call_timeout),
-			"callbackUrl": (config.callback_url),
-			"callbackTimeout": (config.callback_timeout),
-			"callbackHttpMethod": (config.callback_http_method),
-			"fallbackUrl": (config.fallback_url),
-			"bridgeId": (config.bridge_id),
-			"conferenceId": (config.conference_id),
-			"recordingEnabled": (config.recording_enabled),
-			"recordingMaxDuration": (config.recording_max_duration),
-			"transcriptionEnabled": (config.transcription_enabled),
-			"tag": (config.tag)
+			"from": (self.from),
+			"to": (self.to),
+			"callTimeout": (self.config.call_timeout),
+			"callbackUrl": (self.config.callback_url),
+			"callbackTimeout": (self.config.callback_timeout),
+			"callbackHttpMethod": (self.config.callback_http_method),
+			"fallbackUrl": (self.config.fallback_url),
+			"bridgeId": (self.config.bridge_id),
+			"conferenceId": (self.config.conference_id),
+			"recordingEnabled": (self.config.recording_enabled),
+			"recordingMaxDuration": (self.config.recording_max_duration),
+			"transcriptionEnabled": (self.config.transcription_enabled),
+			"tag": (self.config.tag)
 		});
-		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Call{
 			id: id,
-			client: client.clone(),
+			client: self.client.clone(),
 			data: Arc::new(Mutex::new(Data{
 				active_time: NotLoaded,
 				bridge_id: NotLoaded,
-				callback_url: Available(config.callback_url.clone()),
+				callback_url: Available(self.config.callback_url.clone()),
 				direction: Available("out".to_string()),
-				from: Available(from.to_string()),
-				to: Available(to.to_string()),
+				from: Available(self.from.to_string()),
+				to: Available(self.to.to_string()),
 				recording_file_format: NotLoaded,
 				recording_enabled: NotLoaded,
 				start_time: NotLoaded,
@@ -258,6 +283,32 @@ impl Call{
 				end_time: NotLoaded
 			}))
 		})
+	}
+}
+
+#[derive(Clone)]
+pub struct Call{
+	id: String,
+	client: Client,
+	data: Arc<Mutex<Data>> 
+}
+
+impl Call{
+	pub fn load(&self) -> BResult<()>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id;
+		let res:JsonResponse<CallInfo> = try!(self.client.raw_get_request(&path, (), ()));
+		let mut data = self.data.lock().unwrap();
+		*data = try!(Data::from_info(&res.body));
+		Ok(())
+	}
+
+	pub fn create(client: &Client, from: &str, to: &str) -> CallBuilder{
+		CallBuilder{
+			client: client.clone(),
+			from: from.to_owned(),
+			to: to.to_owned(),
+			config: Config::new()
+		}
 	}
 	pub fn get_calls_from_bridge(bridge: &Bridge) -> BResult<Vec<Call>>{
 		let client = bridge.get_client();

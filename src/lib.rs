@@ -21,7 +21,7 @@ pub mod voice;
 
 mod lazy;
 mod util;
-
+mod environment;
 
 pub type BResult<T> = Result<T, error::BError>;
 
@@ -36,10 +36,11 @@ pub use call::Call;
 pub use call_event::CallEvent;
 pub use bridge::Bridge;
 pub use voice::Voice;
+pub use environment::Environment;
 
 pub mod prelude{
 	pub use {Application, BError, BResult, Bridge, Call, CallEvent, Client, Domain,
-		Endpoint, Number, Voice};
+		Endpoint, Environment, Number, Voice};
 	pub use {application, bridge, call, call_event, endpoint, number, voice};
 }
 

@@ -14,7 +14,8 @@ pub enum BError{
 	ApiError(ApiError),
 	InvalidUrl,
 	InternalError(String),
-	Unexpected(String)
+	Unexpected(String),
+	BadInput(String)
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -70,6 +71,9 @@ impl BError{
 		}
 	}
 	pub fn unexpected(msg: &str) -> BError{
-		BError::Unexpected(msg.to_string())
+		BError::Unexpected(msg.to_owned())
+	}
+	pub fn bad_input(msg: &str) -> BError{
+		BError::BadInput(msg.to_owned())
 	}
 }
