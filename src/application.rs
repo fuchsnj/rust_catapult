@@ -131,17 +131,6 @@ impl Application{
 	}
 	pub fn create(client: &Client, config: &Config) -> BResult<Application>{
 		let path = "users/".to_string() + &client.get_user_id() + "/applications";
-		//let json = json!{
-		//	"name": (config.name),
-		//	"incomingCallUrl": (config.incoming_call_url),
-		//	"incomingCallUrlCallbackTimeout": (config.incoming_call_url_callback_timeout),
-		//	"incomingCallFallbackUrl":  (config.incoming_call_fallback_url),
-		//	"incomingMessageUrl": (config.incoming_message_url),
-		//	"incomingMessageUrlCallbackTimeout": (config.incoming_message_url_callback_timeout),
-		//	"incomingMessageFallbackUrl": (config.incoming_message_fallback_url),
-		//	"callbackHttpMethod": (config.callback_http_method),
-		//	"autoAnswer": (config.auto_answer)
-		//};
 		let json = json!({
 			"name" => (config.name),
 			"incomingCallUrl" => (config.incoming_call_url),
