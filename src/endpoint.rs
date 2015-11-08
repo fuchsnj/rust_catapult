@@ -87,7 +87,7 @@ impl Endpoint{
 		}
 		if let Some(password) = data.password.peek(){
 			map.insert("credentials".to_string(), json!({
-				"password": (password)
+				"password" => (password)
 			}));
 		}
 		let json = Json::Object(map);
@@ -113,13 +113,13 @@ impl Endpoint{
 	}
 	pub fn create(client: &Client, domain_id: &str, app_id: &str, config: &Config) -> BResult<Endpoint>{
 		let json = json!({
-			"name": (config.name),
-			"description": (config.description),
-			"domainId": (domain_id),
-			"applicationId": (app_id),
-			"enabled": (config.enabled),
-			"credentials": (json!({
-				"password": (config.password)
+			"name" => (config.name),
+			"description" => (config.description),
+			"domainId" => (domain_id),
+			"applicationId" => (app_id),
+			"enabled" => (config.enabled),
+			"credentials" => (json!({
+				"password" => (config.password)
 			}))
 		});
 		let path = "users/".to_string() + &client.get_user_id() + "/domains/" + domain_id + "/endpoints";

@@ -38,7 +38,7 @@ impl Domain{
 	pub fn create(client: &Client, name: &str) -> BResult<Domain>{
 		let path = "users/".to_string() + &client.get_user_id() + "/domains";
 		let json = json!({
-			"name": (name)
+			"name" => (name)
 		});
 		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
 		Ok(Domain{

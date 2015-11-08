@@ -6,5 +6,4 @@ authors = ["Nathan Fuchs <fuchsnj@gmail.com>"]
 [dependencies]
 hyper = "0.6.4"
 rustc-serialize = "0.3.15"
-json_macros = "0.2.4"
 url = "0.2.36"

@@ -129,25 +129,25 @@ impl<'a> Number<'a>{
 	pub fn search_and_allocate_local(client: &'a Client, quantity: u32, search: Search) -> BResult<Vec<Number<'a>>>{
 		let json = match search{
 			Search::ByCity{city, state} => json!({
-				"city":(city),
-				"state":(state),
-				"quantity":(quantity)
+				"city" => (city),
+				"state" => (state),
+				"quantity" => (quantity)
 			}),
 			Search::ByState(state) => json!({
-				"state":(state),
-				"quantity":(quantity)
+				"state" => (state),
+				"quantity" => (quantity)
 			}),
 			Search::ByZip(zip) => json!({
-				"zip":(zip),
-				"quantity":(quantity)
+				"zip" => (zip),
+				"quantity" => (quantity)
 			}),
 			Search::ByAreaCode{
 				area_code, local_number, in_local_calling_area
 			} => json!({
-				"areaCode": (area_code),
-				"localNumber": (local_number),
-				"inLocalCallingArea": (in_local_calling_area),
-				"quantity" : (quantity)
+				"areaCode" => (area_code),
+				"localNumber" => (local_number),
+				"inLocalCallingArea" => (in_local_calling_area),
+				"quantity" => (quantity)
 			}),
 		};
 		let res:JsonResponse<Vec<AllocatedNumber>> = try!(client.raw_post_request("availableNumbers/local", json, ()));
