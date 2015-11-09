@@ -26,3 +26,27 @@ and this to your crate root:
 ```rust
 extern crate bandwidth_communication;
 ```
+
+## Quick Start
+
+Creating a client, which is required for everything else.
+```
+let client = Client::new(
+	"u-0123456789abcdefg", //user id
+	"t-0123456789abcdefg", //token
+	"0123456789abcdefg0123456789abcdefg" //secret
+);
+```
+
+Create an application, which lets you receive incoming events such as calls and messages.
+```
+let app = client.build_application(
+	"My Communication App", //application name
+	"http://mydomain.com/call", //incoming call callback url
+	"http://mydomain.com/msg" //incoming message callback url
+)
+.disable_auto_answer() //other options can be found in the docs
+.create().unwrap(); //must call create to actually create the resource
+```
+
+
