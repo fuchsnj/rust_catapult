@@ -29,7 +29,7 @@ extern crate bandwidth_communication;
 
 ## Quick Start
 
-Creating a client, which is required for everything else.
+Create a client, which is required for everything else.
 ```rust
 let client = Client::new(
 	"u-0123456789abcdefg", //user id
