@@ -21,14 +21,14 @@ pub mod client;
 pub mod application;
 pub mod error;
 pub mod number;
-pub mod domain;
-pub mod endpoint;
-pub mod auth_token;
 pub mod call;
 pub mod call_event;
-pub mod bridge;
-pub mod voice;
+pub mod endpoint;
 
+mod domain;
+mod auth_token;
+mod bridge;
+mod voice;
 mod lazy;
 mod util;
 mod environment;
@@ -51,6 +51,6 @@ pub use environment::Environment;
 pub mod prelude{
 	pub use {Application, BError, BResult, Bridge, Call, CallEvent, Client, Domain,
 		Endpoint, Environment, Number, Voice};
-	pub use {application, bridge, call, call_event, endpoint, number, voice};
+	pub use {application, call, call_event, number};
 }
 

@@ -181,9 +181,9 @@ struct Config{
 	pub fallback_url: Option<String>,
 	pub bridge_id: Option<String>,
 	pub conference_id: Option<String>,
-	pub recording_enabled: Option<bool>,
+	pub recording_enabled: bool,
 	pub recording_max_duration: Option<u64>,
-	pub transcription_enabled: Option<bool>,
+	pub transcription_enabled: bool,
 	pub tag: Option<String>	
 }
 impl Config{
@@ -196,9 +196,9 @@ impl Config{
 			fallback_url: None,
 			bridge_id: None,
 			conference_id: None,
-			recording_enabled: None,
+			recording_enabled: false,
 			recording_max_duration: None,
-			transcription_enabled: None,
+			transcription_enabled: false,
 			tag: None	
 		}
 	}
@@ -231,19 +231,19 @@ impl CallBuilder{
 	pub fn conference_id(mut self, id: &str) -> Self{
 		self.config.conference_id = Some(id.to_owned()); self
 	}
-	pub fn recording_enabled(mut self, val: bool) -> Self{
-		self.config.recording_enabled = Some(val); self
+	pub fn enable_recording(mut self) -> Self{
+		self.config.recording_enabled = true; self
 	}
 	pub fn recording_max_duration(mut self, duration: u64) -> Self{
 		self.config.recording_max_duration = Some(duration); self
 	}
-	pub fn transcription_enabled(mut self, enabled: bool) -> Self{
-		self.config.transcription_enabled = Some(enabled); self
+	pub fn enable_transcription(mut self) -> Self{
+		self.config.transcription_enabled = true; self
 	}
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.config.tag = Some(tag.to_owned()); self
 	}
-	pub fn dial(&self) -> BResult<Call>{
+	pub fn create(&self) -> BResult<Call>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
 		let json = json!({
 			"from" => (self.from),
@@ -303,7 +303,7 @@ impl Call{
 		Ok(())
 	}
 
-	pub fn create(client: &Client, from: &str, to: &str) -> CallBuilder{
+	pub fn build(client: &Client, from: &str, to: &str) -> CallBuilder{
 		CallBuilder{
 			client: client.clone(),
 			from: from.to_owned(),

@@ -4,6 +4,7 @@ use std::sync::{Mutex, Arc};
 use lazy::Lazy;
 use util;
 use error::BError;
+use endpoint;
 
 pub struct Domain{
 	id: String,
@@ -84,6 +85,9 @@ impl Domain{
 		}
 		Ok(output)
 	}
+	pub fn get_client(&self) -> Client{
+		self.client.clone()
+	}
 	pub fn get_id(&self) -> String{
 		self.id.clone()
 	}
@@ -95,5 +99,11 @@ impl Domain{
 	}
 	pub fn get_endpoint_by_id(&self, id: &str) -> Endpoint{
 		Endpoint::get_by_id(&self.client, id, &self.id)
+	}
+	
+	/* Object Helpers */
+	//Endpoint
+	pub fn build_endpoint(&self, app_id: &str, name: &str, password: &str) -> endpoint::EndpointBuilder{
+		Endpoint::build(&self.client, &self.id, app_id, name, password)
 	}
 }

@@ -3,25 +3,25 @@ use rustc_serialize::json;
 use call::Call;
 use self::info::CallEventInfo;
 
-pub mod incoming_event;
-pub mod answer_event;
-pub mod hangup_event;
-pub mod dtmf_event;
-pub mod playback_event;
-pub mod timeout_event;
-pub mod gather_event;
-pub mod recording_event;
-pub mod speak_event;
+mod incoming_event;
+mod answer_event;
+mod hangup_event;
+mod dtmf_event;
+mod playback_event;
+mod timeout_event;
+mod gather_event;
+mod recording_event;
+mod speak_event;
 
-use self::incoming_event::IncomingEvent;
-use self::answer_event::AnswerEvent;
-use self::hangup_event::HangupEvent;
-use self::dtmf_event::DtmfEvent;
-use self::playback_event::PlaybackEvent;
-use self::timeout_event::TimeoutEvent;
-use self::gather_event::GatherEvent;
-use self::recording_event::RecordingEvent;
-use self::speak_event::SpeakEvent;
+pub use self::incoming_event::IncomingEvent;
+pub use self::answer_event::AnswerEvent;
+pub use self::hangup_event::HangupEvent;
+pub use self::dtmf_event::DtmfEvent;
+pub use self::playback_event::PlaybackEvent;
+pub use self::timeout_event::TimeoutEvent;
+pub use self::gather_event::GatherEvent;
+pub use self::recording_event::RecordingEvent;
+pub use self::speak_event::SpeakEvent;
 
 pub struct CallEvent{
 	client: Client,

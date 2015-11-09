@@ -10,12 +10,7 @@ use std::collections::BTreeMap;
 use rustc_serialize::json::{Json, ToJson};
 use self::info::EndpointInfo;
 
-pub struct Endpoint{
-	id: String,
-	domain_id: String,
-	client: Client,
-	data: Arc<Mutex<Data>>
-}
+
 
 struct Data{
 	name: Lazy<String>,
@@ -27,15 +22,6 @@ struct Data{
 	sip_uri: Lazy<String>,
 	password: Lazy<String> //write only
 }
-
-pub struct Config{
-	pub name: String,
-	pub description: Option<String>,
-	pub enabled: bool,
-	pub password: String
-}
-
-
 
 mod info{
 	#![allow(non_snake_case)]
@@ -57,7 +43,60 @@ mod info{
 		pub sipUri: String
 	}
 }
+pub struct EndpointBuilder{
+	client: Client,
+	app_id: String,
+	name: String,
+	domain_id: String,
+	password: String,
+	description: Option<String>,
+	enabled: bool
+}
+impl EndpointBuilder{
+	pub fn description(mut self, desc: &str) -> Self{
+		self.description = Some(desc.to_owned()); self
+	}
+	pub fn disable(mut self) -> Self{
+		self.enabled = false; self
+	}
+	pub fn create(self) -> BResult<Endpoint>{
+		let json = json!({
+			"name" => (self.name),
+			"description" => (self.description),
+			"domainId" => (self.domain_id),
+			"applicationId" => (self.app_id),
+			"enabled" => (self.enabled),
+			"credentials" => (json!({
+				"password" => (self.password)
+			}))
+		});
+		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.domain_id + "/endpoints";
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let id = try!(util::get_id_from_location_header(&res.headers));
+		Ok(Endpoint{
+			id: id,
+			domain_id: self.domain_id.to_string(),
+			client: self.client.clone(),
+			data: Arc::new(Mutex::new(Data{
+				name: Available(self.name.clone()),
+				description: Available(self.description.clone()),
+				enabled: Available(self.enabled),
+				application_id: Available(self.app_id.to_string()),
+				realm: NotLoaded,
+				username: NotLoaded,
+				sip_uri: NotLoaded,
+				password: NotLoaded
+			}))
+		})
+	}
+}
 
+pub struct Endpoint{
+	id: String,
+	domain_id: String,
+	client: Client,
+	data: Arc<Mutex<Data>>
+}
 impl Endpoint{
 	pub fn load(&self) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.domain_id + "/endpoints/" + &self.id;
@@ -111,35 +150,16 @@ impl Endpoint{
 			}))
 		}
 	}
-	pub fn create(client: &Client, domain_id: &str, app_id: &str, config: &Config) -> BResult<Endpoint>{
-		let json = json!({
-			"name" => (config.name),
-			"description" => (config.description),
-			"domainId" => (domain_id),
-			"applicationId" => (app_id),
-			"enabled" => (config.enabled),
-			"credentials" => (json!({
-				"password" => (config.password)
-			}))
-		});
-		let path = "users/".to_string() + &client.get_user_id() + "/domains/" + domain_id + "/endpoints";
-		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
-		let id = try!(util::get_id_from_location_header(&res.headers));
-		Ok(Endpoint{
-			id: id,
-			domain_id: domain_id.to_string(),
+	pub fn build(client: &Client, domain_id: &str, app_id: &str, name: &str, password: &str) -> EndpointBuilder{
+		EndpointBuilder{
 			client: client.clone(),
-			data: Arc::new(Mutex::new(Data{
-				name: Available(config.name.clone()),
-				description: Available(config.description.clone()),
-				enabled: Available(config.enabled),
-				application_id: Available(app_id.to_string()),
-				realm: NotLoaded,
-				username: NotLoaded,
-				sip_uri: NotLoaded,
-				password: NotLoaded
-			}))
-		})
+			app_id: app_id.to_owned(),
+			name: name.to_owned(),
+			domain_id: domain_id.to_owned(),
+			password: password.to_owned(),
+			description: None,
+			enabled: true
+		}
 	}
 	pub fn create_auth_token(&self) -> BResult<AuthToken>{
 		AuthToken::create(self)
