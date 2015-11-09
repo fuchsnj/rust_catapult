@@ -30,7 +30,7 @@ extern crate bandwidth_communication;
 ## Quick Start
 
 Creating a client, which is required for everything else.
-```
+```rust
 let client = Client::new(
 	"u-0123456789abcdefg", //user id
 	"t-0123456789abcdefg", //token
@@ -39,7 +39,7 @@ let client = Client::new(
 ```
 
 Create an application, which lets you receive incoming events such as calls and messages.
-```
+```rust
 let app = client.build_application(
 	"My Communication App", //application name
 	"http://mydomain.com/call", //incoming call callback url
