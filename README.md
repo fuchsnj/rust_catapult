@@ -30,6 +30,7 @@ extern crate bandwidth_communication;
 ## Quick Start
 
 Create a client, which is required for everything else.
+If you don't have credentials, you can signup [here](https://catapult.inetwork.com/pages/signup.jsf)
 ```rust
 let client = Client::new(
 	"u-0123456789abcdefg", //user id
