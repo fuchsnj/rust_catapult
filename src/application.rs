@@ -9,11 +9,7 @@ use rustc_serialize::json::{Json, ToJson};
 use error::BError;
 use self::info::ApplicationInfo;
 
-pub struct Application{
-	id: String,
-	client: Client,
-	data: Arc<Mutex<Data>>
-}
+
 struct Data{
 	name: Lazy<String>,
 	incoming_call_url: Lazy<Option<String>>,
@@ -24,35 +20,6 @@ struct Data{
 	incoming_message_fallback_url: Lazy<Option<String>>,
 	callback_http_method: Lazy<Option<String>>,
 	auto_answer: Lazy<Option<bool>>
-}
-
-#[derive(Clone)]
-pub struct Config{
-	pub name: String,
-	pub incoming_call_url: Option<String>,
-	pub incoming_call_url_callback_timeout: Option<u64>,
-	pub incoming_call_fallback_url:  Option<String>,
-	pub incoming_message_url: Option<String>,
-	pub incoming_message_url_callback_timeout: Option<u64>,
-	pub incoming_message_fallback_url: Option<String>,
-	pub callback_http_method: Option<String>,
-	pub auto_answer: Option<bool>
-}
-
-impl Config{
-	pub fn new(name: &str) -> Config{
-		Config{
-			name: name.to_string(),
-			incoming_call_url: None,
-			incoming_call_url_callback_timeout: None,
-			incoming_call_fallback_url: None,
-			incoming_message_url: None,
-			incoming_message_url_callback_timeout: None,
-			incoming_message_fallback_url: None,
-			callback_http_method: None,
-			auto_answer: None
-		}
-	}
 }
 
 mod info{
@@ -70,16 +37,117 @@ mod info{
 		pub autoAnswer: Option<bool>
 	}
 }
+pub struct ApplicationBuilder{
+	client: Client,
+	name: String,
+	incoming_message_url: String,
+	incoming_call_url: String,
+	incoming_call_url_callback_timeout: Option<u64>,
+	incoming_call_fallback_url:  Option<String>,
+	incoming_message_url_callback_timeout: Option<u64>,
+	incoming_message_fallback_url: Option<String>,
+	callback_http_method: String,
+	auto_answer: bool
+}
+impl ApplicationBuilder{
+	pub fn incoming_call_url_callback_timeout(mut self, millis: u64) -> Self{
+		self.incoming_call_url_callback_timeout = Some(millis); self
+	}
+	pub fn incoming_call_fallback_url(mut self, url: &str) -> Self{
+		self.incoming_call_fallback_url = Some(url.to_owned()); self
+	}
+	pub fn incoming_message_url_callback_timeout(mut self, millis: u64) -> Self{
+		self.incoming_message_url_callback_timeout = Some(millis); self
+	}
+	pub fn incoming_message_fallback_url(mut self, url: &str) -> Self{
+		self.incoming_message_fallback_url = Some(url.to_owned()); self
+	}
+	/// HTTP method defaults to POST and you receive data as a JSON body.
+	/// Use this to switch to GET and receive data as uri query params
+	pub fn use_get_http_method(mut self) -> Self{
+		self.callback_http_method = "GET".to_owned(); self
+	}
+	pub fn disable_auto_answer(mut self) -> Self{
+		self.auto_answer = false; self
+	}
+	pub fn create(self) -> BResult<Application>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/applications";
+		let json = json!({
+			"name" => (self.name),
+			"incomingCallUrl" => (self.incoming_call_url),
+			"incomingCallUrlCallbackTimeout" => (self.incoming_call_url_callback_timeout),
+			"incomingCallFallbackUrl" =>  (self.incoming_call_fallback_url),
+			"incomingMessageUrl" => (self.incoming_message_url),
+			"incomingMessageUrlCallbackTimeout" => (self.incoming_message_url_callback_timeout),
+			"incomingMessageFallbackUrl" => (self.incoming_message_fallback_url),
+			"callbackHttpMethod" => (self.callback_http_method),
+			"autoAnswer" => (self.auto_answer)
+		});
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let id = try!(util::get_id_from_location_header(&res.headers));
+		Ok(Application{
+			id: id,
+			client: self.client.clone(),
+			data: Arc::new(Mutex::new(Data{
+				name: Available(self.name.clone()),
+				incoming_call_url: Available(Some(self.incoming_call_url.clone())),
+				incoming_call_url_callback_timeout: Available(self.incoming_call_url_callback_timeout),
+				incoming_call_fallback_url: Available(self.incoming_call_fallback_url.clone()),
+				incoming_message_url: Available(Some(self.incoming_message_url.clone())),
+				incoming_message_url_callback_timeout: Available(self.incoming_message_url_callback_timeout),
+				incoming_message_fallback_url: Available(self.incoming_message_fallback_url.clone()),
+				callback_http_method: Available(Some(self.callback_http_method.clone())),
+				auto_answer: Available(Some(self.auto_answer))
+			}))
+		})
+	}
+}
 
 
-impl Application{  
+pub struct Application{
+	id: String,
+	client: Client,
+	data: Arc<Mutex<Data>>
+}
+impl Application{ 
+	//Constructors
+	pub fn build(client: &Client, name: &str, call_url: &str, msg_url: &str) -> ApplicationBuilder{
+		ApplicationBuilder{
+			client: client.clone(),
+			name: name.to_owned(),
+			incoming_message_url: msg_url.to_owned(),
+			incoming_call_url: call_url.to_owned(),
+			incoming_call_url_callback_timeout: None,
+			incoming_call_fallback_url: None,
+			incoming_message_url_callback_timeout: None,
+			incoming_message_fallback_url: None,
+			callback_http_method: "POST".to_owned(),
+			auto_answer: true
+		}
+	}
+	pub fn get_by_id(client: &Client, id: &str) -> Application{
+		Application{
+			id: id.to_string(),
+			client: client.clone(),
+			data: Arc::new(Mutex::new(Data{
+				name: NotLoaded,
+				incoming_call_url: NotLoaded,
+				incoming_call_url_callback_timeout: NotLoaded,
+				incoming_call_fallback_url: NotLoaded,
+				incoming_message_url: NotLoaded,
+				incoming_message_url_callback_timeout: NotLoaded,
+				incoming_message_fallback_url: NotLoaded,
+				callback_http_method: NotLoaded,
+				auto_answer: NotLoaded
+			}))
+		}
+	}
+	
 	pub fn load(&self) -> BResult<()>{
-		
 		//if id = empty string, this will return all apps
 		if self.get_id().len() == 0{
 			return Err(BError::bad_input("invalid app id"))
 		}
-		
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
 		let res:JsonResponse<ApplicationInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -128,54 +196,6 @@ impl Application{
 		let json = Json::Object(map);
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
 		Ok(())
-	}
-	pub fn create(client: &Client, config: &Config) -> BResult<Application>{
-		let path = "users/".to_string() + &client.get_user_id() + "/applications";
-		let json = json!({
-			"name" => (config.name),
-			"incomingCallUrl" => (config.incoming_call_url),
-			"incomingCallUrlCallbackTimeout" => (config.incoming_call_url_callback_timeout),
-			"incomingCallFallbackUrl" =>  (config.incoming_call_fallback_url),
-			"incomingMessageUrl" => (config.incoming_message_url),
-			"incomingMessageUrlCallbackTimeout" => (config.incoming_message_url_callback_timeout),
-			"incomingMessageFallbackUrl" => (config.incoming_message_fallback_url),
-			"callbackHttpMethod" => (config.callback_http_method),
-			"autoAnswer" => (config.auto_answer)
-		});
-		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
-		let id = try!(util::get_id_from_location_header(&res.headers));
-		Ok(Application{
-			id: id,
-			client: client.clone(),
-			data: Arc::new(Mutex::new(Data{
-				name: Available(config.name.clone()),
-				incoming_call_url: Available(config.incoming_call_url.clone()),
-				incoming_call_url_callback_timeout: Available(config.incoming_call_url_callback_timeout),
-				incoming_call_fallback_url: Available(config.incoming_call_fallback_url.clone()),
-				incoming_message_url: Available(config.incoming_message_url.clone()),
-				incoming_message_url_callback_timeout: Available(config.incoming_message_url_callback_timeout),
-				incoming_message_fallback_url: Available(config.incoming_message_fallback_url.clone()),
-				callback_http_method: Available(config.callback_http_method.clone()),
-				auto_answer: Available(config.auto_answer)
-			}))
-		})
-	}
-	pub fn get_by_id(client: &Client, id: &str) -> Application{
-		Application{
-			id: id.to_string(),
-			client: client.clone(),
-			data: Arc::new(Mutex::new(Data{
-				name: NotLoaded,
-				incoming_call_url: NotLoaded,
-				incoming_call_url_callback_timeout: NotLoaded,
-				incoming_call_fallback_url: NotLoaded,
-				incoming_message_url: NotLoaded,
-				incoming_message_url_callback_timeout: NotLoaded,
-				incoming_message_fallback_url: NotLoaded,
-				callback_http_method: NotLoaded,
-				auto_answer: NotLoaded
-			}))
-		}
 	}
 	
 	/* Getters */
