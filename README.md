@@ -50,4 +50,17 @@ let app = client.build_application(
 .create().unwrap(); //must call create to actually create the resource
 ```
 
+Send a message
+```rust
+let msg = client.build_message(
+	"+19195550000", //from number (Must be a Catapult number in your account)
+	"+19195551111", // to number (E164 format)
+	"This is a message!" //text content
+)
+.tag("You can use the tag to set custom meta-data for a message")
+.media("http://some-publicly-accessible-uri")
+.media("http://or-an-internal-media-url") //sum of media must be less than 2,000,000 bytes
+.create().unwrap();
+let msg_id = msg.get_id();//this is the ID of your created message
+```
 

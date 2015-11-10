@@ -11,9 +11,7 @@ use rustc_serialize::json::Json;
 use rustc_serialize::json::ToJson;
 use voice::Voice;
 
-
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum State{
 	Started,
 	Rejected,
@@ -243,7 +241,7 @@ impl CallBuilder{
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.config.tag = Some(tag.to_owned()); self
 	}
-	pub fn create(&self) -> BResult<Call>{
+	pub fn create(self) -> BResult<Call>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
 		let json = json!({
 			"from" => (self.from),
@@ -264,7 +262,7 @@ impl CallBuilder{
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Call{
 			id: id,
-			client: self.client.clone(),
+			client: self.client,
 			data: Arc::new(Mutex::new(Data{
 				active_time: NotLoaded,
 				bridge_id: NotLoaded,

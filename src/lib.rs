@@ -17,40 +17,41 @@ macro_rules! json {
   });
 }
 
-pub mod client;
 pub mod application;
-pub mod error;
-pub mod number;
 pub mod call;
 pub mod call_event;
+pub mod client;
 pub mod endpoint;
+pub mod error;
+pub mod message;
+pub mod number;
 
-mod domain;
 mod auth_token;
 mod bridge;
-mod voice;
+mod domain;
+mod environment;
 mod lazy;
 mod util;
-mod environment;
+mod voice;
 
 pub type BResult<T> = Result<T, error::BError>;
 
-pub use client::Client;
 pub use application::Application;
-pub use error::BError;
-pub use number::Number;
-pub use domain::Domain;
-pub use endpoint::Endpoint;
 pub use auth_token::AuthToken;
+pub use error::BError;
+pub use bridge::Bridge;
 pub use call::Call;
 pub use call_event::CallEvent;
-pub use bridge::Bridge;
-pub use voice::Voice;
+pub use client::Client;
+pub use domain::Domain;
+pub use endpoint::Endpoint;
 pub use environment::Environment;
+pub use message::Message;
+pub use number::Number;
+pub use voice::Voice;
 
 pub mod prelude{
-	pub use {Application, BError, BResult, Bridge, Call, CallEvent, Client, Domain,
-		Endpoint, Environment, Number, Voice};
-	pub use {application, call, call_event, number};
+	pub use {BError, BResult, Client, Environment, Voice};
+	pub use {application, call, call_event, message, number};
 }
 

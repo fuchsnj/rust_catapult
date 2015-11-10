@@ -9,12 +9,13 @@ use hyper::Url;
 use hyper::client::RequestBuilder;
 
 use std::sync::{Mutex, Arc};
-use {util, application};
+use {util, application, message};
 
 use environment::Environment;
 use domain::Domain;
 use call_event::CallEvent;
 use application::Application;
+use message::Message;
 
 #[derive(Clone)]
 pub struct Client{
@@ -154,10 +155,12 @@ impl Client{
 	pub fn parse_call_event(&self, data: &str) -> BResult<CallEvent>{
 		CallEvent::parse(self, data)
 	}
+	
 	// Application
 	pub fn build_application(&self, name: &str, call_url: &str, msg_url: &str) -> application::ApplicationBuilder{
 		Application::build(self, name, call_url, msg_url)
 	}
+	
 	// Domain
 	pub fn create_domain(&self, name: &str) -> BResult<Domain>{
 		Domain::create(self, name)
@@ -170,5 +173,10 @@ impl Client{
 	}
 	pub fn list_domains(&self) -> BResult<Vec<Domain>>{
 		Domain::list(self)
+	}
+	
+	// Message
+	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::MessageBuilder{
+		Message::build(self, from, to, text)
 	}
 }
