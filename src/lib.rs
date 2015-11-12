@@ -24,6 +24,7 @@ pub mod client;
 pub mod endpoint;
 pub mod error;
 pub mod message;
+pub mod message_event;
 pub mod number;
 
 mod auth_token;

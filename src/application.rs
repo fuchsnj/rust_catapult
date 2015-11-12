@@ -125,7 +125,7 @@ impl Application{
 			auto_answer: true
 		}
 	}
-	pub fn get_by_id(client: &Client, id: &str) -> Application{
+	pub fn get(client: &Client, id: &str) -> Application{
 		Application{
 			id: id.to_string(),
 			client: client.clone(),

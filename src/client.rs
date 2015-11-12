@@ -16,6 +16,7 @@ use domain::Domain;
 use call_event::CallEvent;
 use application::Application;
 use message::Message;
+use message_event::MessageEvent;
 
 #[derive(Clone)]
 pub struct Client{
@@ -160,6 +161,9 @@ impl Client{
 	pub fn build_application(&self, name: &str, call_url: &str, msg_url: &str) -> application::ApplicationBuilder{
 		Application::build(self, name, call_url, msg_url)
 	}
+	pub fn get_application(&self, id: &str) -> Application{
+		Application::get(self, id)
+	}
 	
 	// Domain
 	pub fn create_domain(&self, name: &str) -> BResult<Domain>{
@@ -178,5 +182,13 @@ impl Client{
 	// Message
 	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::MessageBuilder{
 		Message::build(self, from, to, text)
+	}
+	pub fn get_message(&self, id: &str) -> Message{
+		Message::get(self, id)
+	}
+	
+	// MessageEvent
+	pub fn parse_message_event(&self, event: &str) -> BResult<MessageEvent>{
+		MessageEvent::parse(self, event)
 	}
 }

@@ -220,7 +220,7 @@ impl Endpoint{
 	
 	pub fn get_application(&self) -> BResult<Application>{
 		let app_id = try!(self.get_application_id());
-		Ok(Application::get_by_id(&self.client, &app_id))
+		Ok(Application::get(&self.client, &app_id))
 	}
 	
 	/* Setters */

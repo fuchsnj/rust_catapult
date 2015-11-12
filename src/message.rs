@@ -3,9 +3,9 @@ use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use lazy::Lazy;
 use lazy::Lazy::*;
-use rustc_serialize::json::Json;
 use rustc_serialize::json::ToJson;
 use util;
+use message_event::MessageEvent;
 use self::info::MessageInfo;
 
 mod info{
@@ -30,6 +30,20 @@ pub enum State{
 	Sending,
 	Sent,
 	Error
+}
+impl State{
+	pub fn parse(state: &str) -> BResult<State>{
+		Ok(match state.as_ref(){
+			"received" => State::Received,
+			"queued" => State::Queued,
+			"sending" => State::Sending,
+			"sent" => State::Sent,
+			"error" => State::Error,
+			err @ _ => return Err(BError::unexpected(
+				&format!("unknown Message state: {}", err)
+			))
+		})
+	}
 }
 pub struct MessageBuilder{
 	client: Client,
@@ -117,16 +131,7 @@ impl Data{
 			}),
 			from: Available(info.from.clone()),
 			to: Available(info.to.clone()),
-			state: Available(match info.state.as_ref(){
-				"received" => State::Received,
-				"queued" => State::Queued,
-				"sending" => State::Sending,
-				"sent" => State::Sent,
-				"error" => State::Error,
-				state @ _ => return Err(BError::unexpected(
-					&format!("unknown Message state: {}", state)
-				))
-			}),
+			state: Available(try!(State::parse(&info.state))),
 			text: Available(info.text.clone()),
 			time: Available(info.time.clone())
 		})
@@ -152,6 +157,34 @@ impl Message{
 			callback_timeout: None,
 			fallback_url: None,
 			tag: None
+		}
+	}
+	pub fn get(client: &Client, id: &str) -> Message{
+		Message{
+			id: id.to_owned(),
+			client: client.clone(),
+			data: Arc::new(Mutex::new(Data{
+				inbound: NotLoaded,
+				from: NotLoaded,
+				to: NotLoaded,
+				state: NotLoaded,
+				text: NotLoaded,
+				time: NotLoaded
+			}))
+		}
+	}
+	pub fn from_event(event: &MessageEvent) -> Message{
+		Message{
+			id: event.get_message_id(),
+			client: event.get_client(),
+			data: Arc::new(Mutex::new(Data{
+				inbound: Available(event.is_inbound()),
+				from: Available(event.get_from()),
+				to: Available(event.get_to()),
+				state: NotLoaded,
+				text: Available(event.get_text()),
+				time: Available(event.get_time())
+			}))
 		}
 	}
 	pub fn load(&self) -> BResult<()>{
