@@ -4,6 +4,8 @@ use self::info::MessageEventInfo;
 use rustc_serialize::json;
 use message::{Message, State};
 use application::Application;
+use media::Media;
+use util;
 
 pub struct MessageEvent{
 	client: Client,
@@ -14,7 +16,8 @@ pub struct MessageEvent{
 	text: String,
 	inbound: bool,
 	state: State,
-	application_id: Option<String>
+	application_id: Option<String>,
+	media: Vec<Media>
 }
 impl MessageEvent{
 	pub fn parse(client: &Client, data: &str) -> BResult<MessageEvent>{
@@ -34,7 +37,18 @@ impl MessageEvent{
 				))
 			},
 			state: try!(State::parse(&info.state)),
-			application_id: info.applicationId.clone()
+			application_id: info.applicationId.clone(),
+			media: match info.media{
+				Some(media) => {
+					let mut output = vec!();
+					for url in media{
+						let filename = try!(util::get_id_from_location_url(&url));
+						output.push(Media::get(client, &filename));
+					}
+					output
+				},
+				None => vec!()
+			}
 		})
 	}
 }
@@ -73,6 +87,9 @@ impl MessageEvent{
 		self.application_id.clone().map(|id|{
 			self.client.get_application(&id)
 		})
+	}
+	pub fn get_media(&self) -> Vec<Media>{
+		self.media.clone()
 	}
 }
 mod info{

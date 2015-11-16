@@ -41,7 +41,7 @@ impl Domain{
 		let json = json!({
 			"name" => (name)
 		});
-		let res:EmptyResponse = try!(client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(client.raw_post_request(&path, (), &json));
 		Ok(Domain{
 			id: try!(util::get_id_from_location_header(&res.headers)),
 			client: client.clone(),

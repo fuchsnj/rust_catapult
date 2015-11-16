@@ -6,6 +6,7 @@ use lazy::Lazy::*;
 use rustc_serialize::json::ToJson;
 use util;
 use message_event::MessageEvent;
+use media::Media;
 use self::info::MessageInfo;
 
 mod info{
@@ -18,8 +19,8 @@ mod info{
 		pub to: String,
 		pub state: String,
 		pub text: String,
-		//pub media: Vec<String>,
-		pub time: String
+		pub time: String,
+		pub media: Option<Vec<String>>
 	}
 }
 
@@ -94,7 +95,7 @@ impl MessageBuilder{
 			"fallbackUrl" => (self.fallback_url),
 			"tag" => (self.tag)
 		});
-		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Message{
 			id: id,
@@ -105,7 +106,8 @@ impl MessageBuilder{
 				to: Available(self.to.clone()),
 				state: NotLoaded,
 				text: Available(self.text.clone()),
-				time: NotLoaded
+				time: NotLoaded,
+				media: NotLoaded
 			}))
 		})
 	}
@@ -117,10 +119,11 @@ struct Data{
 	to: Lazy<String>,
 	state: Lazy<State>,
 	text: Lazy<String>,
-	time: Lazy<String>
+	time: Lazy<String>,
+	media: Lazy<Vec<Media>>
 }
 impl Data{
-	fn from_info(info: &MessageInfo) -> BResult<Data>{
+	fn from_info(client: &Client, info: &MessageInfo) -> BResult<Data>{
 		Ok(Data{
 			inbound: Available(match info.direction.as_ref(){
 				"in" => true,
@@ -133,7 +136,20 @@ impl Data{
 			to: Available(info.to.clone()),
 			state: Available(try!(State::parse(&info.state))),
 			text: Available(info.text.clone()),
-			time: Available(info.time.clone())
+			time: Available(info.time.clone()),
+			media: Available(
+				match info.media{
+					Some(ref media) => {
+						let mut output = vec!();
+						for url in media{
+							let filename = try!(util::get_id_from_location_url(&url));
+							output.push(Media::get(client, &filename));
+						}
+						output
+					},
+					None => vec!()
+				}
+			)
 		})
 	}
 }
@@ -169,7 +185,8 @@ impl Message{
 				to: NotLoaded,
 				state: NotLoaded,
 				text: NotLoaded,
-				time: NotLoaded
+				time: NotLoaded,
+				media: NotLoaded
 			}))
 		}
 	}
@@ -183,7 +200,8 @@ impl Message{
 				to: Available(event.get_to()),
 				state: NotLoaded,
 				text: Available(event.get_text()),
-				time: Available(event.get_time())
+				time: Available(event.get_time()),
+				media: Available(event.get_media())
 			}))
 		}
 	}
@@ -191,7 +209,7 @@ impl Message{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/messages/" + &self.id;
 		let res:JsonResponse<MessageInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
-		*data = try!(Data::from_info(&res.body));
+		*data = try!(Data::from_info(&self.client, &res.body));
 		Ok(())
 	}
 	
@@ -240,5 +258,11 @@ impl Message{
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().time.get()).clone())
+	}
+	pub fn get_media(&self) -> BResult<Vec<Media>>{
+		if !self.data.lock().unwrap().media.available(){
+			try!(self.load());
+		}
+		Ok(try!(self.data.lock().unwrap().media.get()).clone())
 	}
 }

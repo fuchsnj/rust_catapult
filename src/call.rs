@@ -258,7 +258,7 @@ impl CallBuilder{
 			"transcriptionEnabled" => (self.config.transcription_enabled),
 			"tag" => (self.config.tag)
 		});
-		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Call{
 			id: id,
@@ -400,7 +400,7 @@ impl Call{
 			"loopEnabled" => (loop_audio),
 			"tag" => (tag.map(|a|a.to_string()))
 		});
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	pub fn stop_audio_file(&self) -> BResult<()>{
@@ -408,7 +408,7 @@ impl Call{
 		let json = json!({
 			"fileUrl" => ""
 		});
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> BResult<()>{
@@ -419,7 +419,7 @@ impl Call{
 			"voice" => (voice.get_name()),
 			"tag" => (tag.map(|a|a.to_string()))
 		});
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	pub fn send_dtmf(&self, digits: &str) -> BResult<()>{
@@ -427,7 +427,7 @@ impl Call{
 		let json = json!({
 			"dtmfOut" => (digits)
 		});
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	
@@ -460,7 +460,7 @@ impl Call{
 			"prompt" => (prompt)
 		});
 		
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		//let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(())
 	}

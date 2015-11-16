@@ -4,19 +4,19 @@ use error::BError;
 use hyper;
 use hyper::header::{Authorization, Basic, ContentType, Headers};
 use hyper::client::response::Response;
-use rustc_serialize::{Encodable, Decodable, json};
+use rustc_serialize::{Decodable, json};
+use rustc_serialize::json::Json;
 use hyper::Url;
 use hyper::client::RequestBuilder;
-
 use std::sync::{Mutex, Arc};
 use {util, application, message};
-
 use environment::Environment;
 use domain::Domain;
 use call_event::CallEvent;
 use application::Application;
 use message::Message;
 use message_event::MessageEvent;
+use media::{Media, ToBytes};
 
 #[derive(Clone)]
 pub struct Client{
@@ -51,6 +51,21 @@ where T: Decodable{
 	}
 }
 
+pub struct ByteResponse{
+	pub headers: Headers,
+	pub body: Vec<u8>
+}
+impl ApiResponse<ByteResponse> for ByteResponse{
+	fn new(res: &mut Response) -> BResult<ByteResponse>{
+		let mut data = vec!();
+		try!(res.read_to_end(&mut data));
+		Ok(ByteResponse{
+			headers: res.headers.clone(),
+			body: data
+		})
+	}
+}
+
 
 #[derive(Debug)]
 pub struct EmptyResponse{
@@ -64,6 +79,30 @@ impl ApiResponse<EmptyResponse> for EmptyResponse{
 	}
 }
 
+pub trait ToBody{
+	fn to_body(self) -> Vec<u8>;
+}
+impl ToBody for Vec<u8>{
+	fn to_body(self) -> Vec<u8>{
+		self
+	}
+}
+impl ToBody for String{
+	fn to_body(self) -> Vec<u8>{
+		self.into_bytes()
+	}
+}
+
+impl<'a> ToBody for &'a Json{
+	fn to_body(self) -> Vec<u8>{
+		self.to_string().to_body()
+	}
+}
+impl<'a> ToBody for (){
+	fn to_body(self) -> Vec<u8>{
+		vec!()
+	}
+}
 
 
 impl Client{
@@ -82,34 +121,45 @@ impl Client{
 		let data = self.data.lock().unwrap();
 		data.environment.get_base_url() + "/" + &data.api_version + "/" + path 
 	}
-	
+	pub fn raw_put_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
+		self.raw_request(path, params, body, |client, url|{
+			client.put(url)
+		})
+	}
 	pub fn raw_post_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
-	where Input: Encodable, Params: json::ToJson, Output: ApiResponse<Output>{
+	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.post(url)
 		})
 	}
 	
 	pub fn raw_get_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
-	where Input: Encodable, Params: json::ToJson, Output: ApiResponse<Output>{
+	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.get(url)
 		})
 	}
 	
+	pub fn raw_head_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
+		self.raw_request(path, params, body, |client, url|{
+			client.head(url)
+		})
+	}
+	
 	fn raw_request<Input, Params, Output, Type>(&self, path: &str, params: Params, body: Input, req_type: Type) -> BResult<Output>
 	where 
-	 	Input: Encodable,
+	 	Input: ToBody,
 		Output: ApiResponse<Output>,
 		Params: json::ToJson,
 		Type: for<'a> FnOnce(&'a hyper::Client, Url) -> RequestBuilder<'a, Url>
-	{			
+	{
 		let mut url = try!(Url::parse(&self.create_url(path)));
 		util::set_query_params_from_json(&mut url, &params.to_json());
 		
 		let client = hyper::Client::new();
-		let json_body = try!(json::encode(&body));
-		
+		let vec_body: Vec<u8> = body.to_body();
 		let req = 
 			req_type(&client, url)
 			.header(Authorization(Basic{
@@ -117,14 +167,14 @@ impl Client{
 				password: Some(self.get_api_secret())
 			}))
 			.header(ContentType::json())
-			.body(&json_body);
+			.body(&vec_body as &[u8]);
 		
 		let mut res = try!(req.send());
 		
 		let status = res.status_raw().0;
-		
 		if status >= 200 && status < 400{
-			Output::new(&mut res)
+			let output = Output::new(&mut res);
+			output
 		}else{
 			let mut data = String::new();
 			try!(res.read_to_string(&mut data));
@@ -178,7 +228,14 @@ impl Client{
 	pub fn list_domains(&self) -> BResult<Vec<Domain>>{
 		Domain::list(self)
 	}
-	
+	//Media
+	pub fn create_media<T>(&self, filename: &str, data: T) -> BResult<Media>
+	where T: ToBytes{
+		Media::create(self, filename, data)
+	}
+	pub fn get_media(&self, filename: &str) -> Media{
+		Media::get(self, filename)
+	}
 	// Message
 	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::MessageBuilder{
 		Message::build(self, from, to, text)

@@ -32,8 +32,10 @@ mod bridge;
 mod domain;
 mod environment;
 mod lazy;
+mod media;
 mod util;
 mod voice;
+
 
 pub type BResult<T> = Result<T, error::BError>;
 
@@ -47,9 +49,11 @@ pub use client::Client;
 pub use domain::Domain;
 pub use endpoint::Endpoint;
 pub use environment::Environment;
+pub use media::Media;
 pub use message::Message;
 pub use number::Number;
 pub use voice::Voice;
+
 
 pub mod prelude{
 	pub use {BError, BResult, Client, Environment, Voice};

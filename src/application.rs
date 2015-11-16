@@ -83,7 +83,7 @@ impl ApplicationBuilder{
 			"callbackHttpMethod" => (self.callback_http_method),
 			"autoAnswer" => (self.auto_answer)
 		});
-		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Application{
 			id: id,
@@ -194,7 +194,7 @@ impl Application{
 			map.insert("autoAnswer".to_string(), auto_answer.to_json());
 		}
 		let json = Json::Object(map);
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	

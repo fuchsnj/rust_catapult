@@ -4,6 +4,7 @@ use rustc_serialize::json;
 use std::io;
 use url;
 use lazy::LazyError;
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub enum BError{
@@ -15,7 +16,8 @@ pub enum BError{
 	InvalidUrl,
 	InternalError(String),
 	Unexpected(String),
-	BadInput(String)
+	BadInput(String),
+	Utf8Error
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -35,7 +37,11 @@ impl convert::From<hyper::error::Error> for BError{
 //		BError::SerializationError("Utf8Error".to_string())
 //	}
 //}
-
+impl convert::From<FromUtf8Error> for BError{
+	fn from(_: FromUtf8Error) -> BError{
+		BError::Utf8Error
+	}
+}
 impl convert::From<json::EncoderError> for BError{
 	fn from(err: json::EncoderError) -> BError{
 		BError::EncoderError(err)

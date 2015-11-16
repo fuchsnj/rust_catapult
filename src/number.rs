@@ -104,7 +104,7 @@ impl<'a> Number<'a>{
 			map.insert("fallbackNumber".to_string(), fallback_number.to_json());
 		}
 		let json = Json::Object(map);
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	pub fn by_id(client: &'a Client, id: &str) -> Number<'a>{

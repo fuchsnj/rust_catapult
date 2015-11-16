@@ -71,7 +71,7 @@ impl EndpointBuilder{
 			}))
 		});
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.domain_id + "/endpoints";
-		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Endpoint{
 			id: id,
@@ -130,7 +130,7 @@ impl Endpoint{
 			}));
 		}
 		let json = Json::Object(map);
-		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json));
+		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
 	pub fn get_by_id(client: &Client, id: &str, domain_id: &str) -> Endpoint{
