@@ -153,7 +153,7 @@ impl Client{
 	 	Input: ToBody,
 		Output: ApiResponse<Output>,
 		Params: json::ToJson,
-		Type: for<'a> FnOnce(&'a hyper::Client, Url) -> RequestBuilder<'a, Url>
+		Type: FnOnce(& hyper::Client, Url) -> RequestBuilder
 	{
 		let mut url = try!(Url::parse(&self.create_url(path)));
 		util::set_query_params_from_json(&mut url, &params.to_json());
