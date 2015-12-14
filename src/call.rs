@@ -403,7 +403,9 @@ impl Call{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn stop_audio_file(&self) -> BResult<()>{
+	///Stops either an audio file playing, or a sentence being spoken
+	///This is the only way to stop audio in a loop
+	pub fn stop_audio(&self) -> BResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
 			"fileUrl" => ""
