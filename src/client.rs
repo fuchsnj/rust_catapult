@@ -17,6 +17,8 @@ use application::Application;
 use message::Message;
 use message_event::MessageEvent;
 use media::{Media, ToBytes};
+use conference::{Conference, ConferenceBuilder};
+use call::{CallBuilder, Call};
 
 #[derive(Clone)]
 pub struct Client{
@@ -214,7 +216,17 @@ impl Client{
 	pub fn get_application(&self, id: &str) -> Application{
 		Application::get(self, id)
 	}
-	
+	//Call
+	pub fn build_call(&self, from: &str, to: &str) -> CallBuilder{
+		Call::build(self, from, to)
+	}
+	//Conference
+	pub fn build_conference(&self, from: &str) -> ConferenceBuilder{
+		Conference::build(self, from)
+	}
+	pub fn get_conference(&self, id: &str) -> Conference{
+		Conference::get(self, id)
+	}
 	// Domain
 	pub fn create_domain(&self, name: &str) -> BResult<Domain>{
 		Domain::create(self, name)
