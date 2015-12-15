@@ -244,6 +244,18 @@ pub struct MemberBuilder{
 	hold: bool
 }
 impl MemberBuilder{
+	pub fn no_join_tone(mut self) -> Self{
+		self.join_tone = false; self
+	}
+	pub fn no_leaving_tone(mut self) -> Self{
+		self.leaving_tone = false; self
+	}
+	pub fn mute(mut self) -> Self{
+		self.mute = true; self
+	}
+	pub fn hold(mut self) -> Self{
+		self.hold = true; self
+	}
 	pub fn new(conf: &Conference, call_id: &str) -> MemberBuilder{
 		MemberBuilder{
 			conf: conf.clone(),
