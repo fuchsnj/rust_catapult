@@ -1,4 +1,4 @@
-use {BResult, BError};
+use {CatapultResult, CatapultError};
 use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use lazy::Lazy;
@@ -33,14 +33,14 @@ pub enum State{
 	Error
 }
 impl State{
-	pub fn parse(state: &str) -> BResult<State>{
+	pub fn parse(state: &str) -> CatapultResult<State>{
 		Ok(match state.as_ref(){
 			"received" => State::Received,
 			"queued" => State::Queued,
 			"sending" => State::Sending,
 			"sent" => State::Sent,
 			"error" => State::Error,
-			err @ _ => return Err(BError::unexpected(
+			err @ _ => return Err(CatapultError::unexpected(
 				&format!("unknown Message state: {}", err)
 			))
 		})
@@ -81,7 +81,7 @@ impl MessageBuilder{
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.tag = Some(tag.to_owned()); self
 	}
-	pub fn create(self) -> BResult<Message>{
+	pub fn create(self) -> CatapultResult<Message>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/messages";
 		let json = json!({
 			"from" => (self.from),
@@ -123,12 +123,12 @@ struct Data{
 	media: Lazy<Vec<Media>>
 }
 impl Data{
-	fn from_info(client: &Client, info: &MessageInfo) -> BResult<Data>{
+	fn from_info(client: &Client, info: &MessageInfo) -> CatapultResult<Data>{
 		Ok(Data{
 			inbound: Available(match info.direction.as_ref(){
 				"in" => true,
 				"out" => false,
-				direction @ _ => return Err(BError::unexpected(
+				direction @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown Message direction: {}", direction)
 				))
 			}),
@@ -205,7 +205,7 @@ impl Message{
 			}))
 		}
 	}
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/messages/" + &self.id;
 		let res:JsonResponse<MessageInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -220,46 +220,46 @@ impl Message{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn is_inbound(&self) -> BResult<bool>{
+	pub fn is_inbound(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().inbound.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().inbound.get()).clone())
 	}
-	pub fn is_outbound(&self) -> BResult<bool>{
+	pub fn is_outbound(&self) -> CatapultResult<bool>{
 		Ok(! try!(self.is_inbound()))
 	}
-	pub fn get_from(&self) -> BResult<String>{
+	pub fn get_from(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().from.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().from.get()).clone())
 	}
-	pub fn get_to(&self) -> BResult<String>{
+	pub fn get_to(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().to.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().to.get()).clone())
 	}
-	pub fn get_state(&self) -> BResult<State>{
+	pub fn get_state(&self) -> CatapultResult<State>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn get_text(&self) -> BResult<String>{
+	pub fn get_text(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().text.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().text.get()).clone())
 	}
-	pub fn get_time(&self) -> BResult<String>{
+	pub fn get_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().time.get()).clone())
 	}
-	pub fn get_media(&self) -> BResult<Vec<Media>>{
+	pub fn get_media(&self) -> CatapultResult<Vec<Media>>{
 		if !self.data.lock().unwrap().media.available(){
 			try!(self.load());
 		}

@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 use error::BError;
 
 #[derive(Clone)]
@@ -18,7 +18,7 @@ pub struct GatherEvent{
 	id: String
 }
 impl GatherEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<GatherEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<GatherEvent>{
 		let reason_string = try!(util::expect(info.reason.clone(), "GatherEvent::reason"));
 		
 		Ok(GatherEvent{

@@ -1,4 +1,4 @@
-use {Client, BResult};
+use {Client, CatapultResult};
 use client::{JsonResponse, EmptyResponse};
 use util;
 use std::sync::{Mutex, Arc};
@@ -71,7 +71,7 @@ mod info{
 
 
 impl<'a> Number<'a>{
-	fn load(&self) -> BResult<()>{
+	fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/phoneNumbers/" + &self.id;
 		let res:JsonResponse<NumberInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -90,7 +90,7 @@ impl<'a> Number<'a>{
 		data.fallback_number = Available(res.body.fallbackNumber);
 		Ok(())
 	}
-	pub fn save(&self) -> BResult<()>{
+	pub fn save(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/phoneNumbers/" + &self.id;
 		let data = self.data.lock().unwrap();
 		let mut map = BTreeMap::new();
@@ -126,7 +126,7 @@ impl<'a> Number<'a>{
 		}
 	}
 
-	pub fn search_and_allocate_local(client: &'a Client, quantity: u32, search: Search) -> BResult<Vec<Number<'a>>>{
+	pub fn search_and_allocate_local(client: &'a Client, quantity: u32, search: Search) -> CatapultResult<Vec<Number<'a>>>{
 		let json = match search{
 			Search::ByCity{city, state} => json!({
 				"city" => (city),
@@ -176,67 +176,67 @@ impl<'a> Number<'a>{
 	}
 	
 	/* Getters */
-	pub fn get_id(&self) -> BResult<String>{
+	pub fn get_id(&self) -> CatapultResult<String>{
 		Ok(self.id.clone())
 	}
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn get_name(&self) -> BResult<Option<String>>{
+	pub fn get_name(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().name.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().name.get()).clone())
 	}
-	pub fn get_number(&self) -> BResult<String>{
+	pub fn get_number(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().number.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().number.get()).clone())
 	}
-	pub fn get_national_number(&self) -> BResult<String>{
+	pub fn get_national_number(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().national_number.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().national_number.get()).clone())
 	}
-	pub fn get_created_time(&self) -> BResult<String>{
+	pub fn get_created_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().created_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().created_time.get()).clone())
 	}
-	pub fn get_city(&self) -> BResult<String>{
+	pub fn get_city(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().city.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().city.get()).clone())
 	}
-	pub fn get_state(&self) -> BResult<String>{
+	pub fn get_state(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn get_price(&self) -> BResult<String>{
+	pub fn get_price(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().price.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().price.get()).clone())
 	}
-	pub fn get_number_state(&self) -> BResult<String>{
+	pub fn get_number_state(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().number_state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().number_state.get()).clone())
 	}
-	pub fn get_application_id(&self) -> BResult<Option<String>>{
+	pub fn get_application_id(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().application_id.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().application_id.get()).clone())
 	}
-	pub fn get_fallback_number(&self) -> BResult<Option<String>>{
+	pub fn get_fallback_number(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().fallback_number.available(){
 			try!(self.load());
 		}
@@ -248,4 +248,10 @@ impl<'a> Number<'a>{
 		self.data.lock().unwrap().application_id = Available(id.map(|a|a.to_string()));
 	}
 	
+	/* Actions */
+	pub fn release(&self) -> CatapultResult<()>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/phoneNumbers/" + &self.id;
+		try!(self.client.raw_delete_request(&path, ()));
+		Ok(())
+	}
 }

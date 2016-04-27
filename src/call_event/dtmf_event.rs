@@ -1,13 +1,13 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 
 pub struct DtmfEvent{
 	digit: String,
 	time: String
 }
 impl DtmfEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<DtmfEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<DtmfEvent>{
 		Ok(DtmfEvent{
 			digit: try!(util::expect(info.digit.clone(), "DtmfEvent::digit")),
 			time: try!(util::expect(info.time.clone(), "DtmfEvent::time"))

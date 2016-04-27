@@ -38,11 +38,11 @@ mod util;
 mod voice;
 
 
-pub type BResult<T> = Result<T, error::BError>;
+pub type CatapultResult<T> = Result<T, error::CatapultError>;
 
 pub use application::Application;
 pub use auth_token::AuthToken;
-pub use error::BError;
+pub use error::CatapultError;
 pub use bridge::Bridge;
 pub use call::Call;
 pub use call_event::CallEvent;
@@ -58,7 +58,7 @@ pub use voice::Voice;
 
 
 pub mod prelude{
-	pub use {BError, BResult, Client, Environment, Voice};
+	pub use {CatapultError, CatapultResult, Client, Environment, Voice};
 	pub use {application, call, call_event, message, number};
 }
 

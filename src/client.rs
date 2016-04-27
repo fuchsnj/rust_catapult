@@ -1,6 +1,6 @@
 use std::io::Read;
-use BResult;
-use error::BError;
+use CatapultResult;
+use error::CatapultError;
 use hyper;
 use hyper::header::{Authorization, Basic, ContentType, Headers};
 use hyper::client::response::Response;
@@ -16,6 +16,7 @@ use call_event::CallEvent;
 use application::Application;
 use message::Message;
 use message_event::MessageEvent;
+use number::Number;
 use media::{Media, ToBytes};
 use conference::{Conference, ConferenceBuilder};
 use call::{CallBuilder, Call};
@@ -34,7 +35,7 @@ struct Data{
 }
 
 pub trait ApiResponse<T>{
-	fn new(response: &mut Response) -> BResult<T>;
+	fn new(response: &mut Response) -> CatapultResult<T>;
 }
 #[derive(Debug)]
 pub struct JsonResponse<T>{
@@ -43,7 +44,7 @@ pub struct JsonResponse<T>{
 }
 impl<T> ApiResponse<JsonResponse<T>> for JsonResponse<T>
 where T: Decodable{
-	fn new(res: &mut Response) -> BResult<JsonResponse<T>>{
+	fn new(res: &mut Response) -> CatapultResult<JsonResponse<T>>{
 		let mut data = String::new();
 		try!(res.read_to_string(&mut data));
 		Ok(JsonResponse{
@@ -58,7 +59,7 @@ pub struct ByteResponse{
 	pub body: Vec<u8>
 }
 impl ApiResponse<ByteResponse> for ByteResponse{
-	fn new(res: &mut Response) -> BResult<ByteResponse>{
+	fn new(res: &mut Response) -> CatapultResult<ByteResponse>{
 		let mut data = vec!();
 		try!(res.read_to_end(&mut data));
 		Ok(ByteResponse{
@@ -74,7 +75,7 @@ pub struct EmptyResponse{
 	pub headers: Headers
 }
 impl ApiResponse<EmptyResponse> for EmptyResponse{
-	fn new(response: &mut Response) -> BResult<EmptyResponse>{
+	fn new(response: &mut Response) -> CatapultResult<EmptyResponse>{
 		Ok(EmptyResponse{
 			headers: response.headers.clone()
 		})
@@ -123,34 +124,40 @@ impl Client{
 		let data = self.data.lock().unwrap();
 		data.environment.get_base_url() + "/" + &data.api_version + "/" + path 
 	}
-	pub fn raw_put_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	pub fn raw_delete_request<Params>(&self, path: &str, params: Params) -> CatapultResult<EmptyResponse>
+	where Params: json::ToJson{
+		self.raw_request(path, params, (), |client, url|{
+			client.delete(url)
+		})
+	}
+	pub fn raw_put_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> CatapultResult<Output>
 	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.put(url)
 		})
 	}
-	pub fn raw_post_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	pub fn raw_post_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> CatapultResult<Output>
 	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.post(url)
 		})
 	}
 	
-	pub fn raw_get_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	pub fn raw_get_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> CatapultResult<Output>
 	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.get(url)
 		})
 	}
 	
-	pub fn raw_head_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> BResult<Output>
+	pub fn raw_head_request<Input, Params, Output>(&self, path: &str, params: Params, body: Input) -> CatapultResult<Output>
 	where Input: ToBody, Params: json::ToJson, Output: ApiResponse<Output>{
 		self.raw_request(path, params, body, |client, url|{
 			client.head(url)
 		})
 	}
 	
-	fn raw_request<Input, Params, Output, Type>(&self, path: &str, params: Params, body: Input, req_type: Type) -> BResult<Output>
+	fn raw_request<Input, Params, Output, Type>(&self, path: &str, params: Params, body: Input, req_type: Type) -> CatapultResult<Output>
 	where 
 	 	Input: ToBody,
 		Output: ApiResponse<Output>,
@@ -180,7 +187,7 @@ impl Client{
 		}else{
 			let mut data = String::new();
 			try!(res.read_to_string(&mut data));
-			Err(BError::api_error(&data))
+			Err(CatapultError::api_error(&data))
 		}
 	}
 	/* Setters */
@@ -205,7 +212,7 @@ impl Client{
 	
 	/* Object Helpers */
 	
-	pub fn parse_call_event(&self, data: &str) -> BResult<CallEvent>{
+	pub fn parse_call_event(&self, data: &str) -> CatapultResult<CallEvent>{
 		CallEvent::parse(self, data)
 	}
 	
@@ -216,10 +223,12 @@ impl Client{
 	pub fn get_application(&self, id: &str) -> Application{
 		Application::get(self, id)
 	}
+	
 	//Call
 	pub fn build_call(&self, from: &str, to: &str) -> CallBuilder{
 		Call::build(self, from, to)
 	}
+	
 	//Conference
 	pub fn build_conference(&self, from: &str) -> ConferenceBuilder{
 		Conference::build(self, from)
@@ -227,27 +236,30 @@ impl Client{
 	pub fn get_conference(&self, id: &str) -> Conference{
 		Conference::get(self, id)
 	}
+	
 	// Domain
-	pub fn create_domain(&self, name: &str) -> BResult<Domain>{
+	pub fn create_domain(&self, name: &str) -> CatapultResult<Domain>{
 		Domain::create(self, name)
 	}
 	pub fn get_domain(&self, id: &str) -> Domain{
 		Domain::get(self, id)
 	}
-	pub fn get_domain_by_name(&self, name: &str) -> BResult<Option<Domain>>{
+	pub fn get_domain_by_name(&self, name: &str) -> CatapultResult<Option<Domain>>{
 		Domain::get_by_name(self, name)
 	}
-	pub fn list_domains(&self) -> BResult<Vec<Domain>>{
+	pub fn list_domains(&self) -> CatapultResult<Vec<Domain>>{
 		Domain::list(self)
 	}
+	
 	//Media
-	pub fn create_media<T>(&self, filename: &str, data: T) -> BResult<Media>
+	pub fn create_media<T>(&self, filename: &str, data: T) -> CatapultResult<Media>
 	where T: ToBytes{
 		Media::create(self, filename, data)
 	}
 	pub fn get_media(&self, filename: &str) -> Media{
 		Media::get(self, filename)
 	}
+	
 	// Message
 	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::MessageBuilder{
 		Message::build(self, from, to, text)
@@ -257,7 +269,12 @@ impl Client{
 	}
 	
 	// MessageEvent
-	pub fn parse_message_event(&self, event: &str) -> BResult<MessageEvent>{
+	pub fn parse_message_event(&self, event: &str) -> CatapultResult<MessageEvent>{
 		MessageEvent::parse(self, event)
+	}
+	
+	// Number
+	pub fn get_number_by_id(&self, id: &str) -> Number{
+		Number::by_id(self, id)
 	}
 }

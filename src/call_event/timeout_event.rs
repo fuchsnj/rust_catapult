@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 
 pub struct TimeoutEvent{
 	time: String,
@@ -8,7 +8,7 @@ pub struct TimeoutEvent{
 	to: String
 }
 impl TimeoutEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<TimeoutEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<TimeoutEvent>{
 		Ok(TimeoutEvent{
 			time: try!(util::expect(info.time.clone(), "TimeoutEvent::time")),
 			from: try!(util::expect(info.from.clone(), "TimeoutEvent::from")),

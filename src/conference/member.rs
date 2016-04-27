@@ -1,4 +1,4 @@
-use {BResult, BError};
+use {CatapultResult, CatapultError};
 use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use util;
@@ -22,13 +22,13 @@ pub struct Member{
 	data: Arc<Mutex<Data>>
 }
 impl Member{
-	fn post(&self, json: Json) -> BResult<()>{
+	fn post(&self, json: Json) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.conf.get_client().get_user_id() + "/conferences/"
 			+ &self.conf.get_id() + "/members/" + &self.id;
 		let _:EmptyResponse = try!(self.conf.get_client().raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn save(&self) -> BResult<()>{
+	pub fn save(&self) -> CatapultResult<()>{
 		let mut map = BTreeMap::new();
 		{
 			let data = self.data.lock().unwrap();
@@ -47,10 +47,10 @@ impl Member{
 		}
 		self.post(Json::Object(map))
 	}
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		//if id = empty string, this will return all members
 		if self.get_id().len() == 0{
-			return Err(BError::bad_input("invalid member id"))
+			return Err(CatapultError::bad_input("invalid member id"))
 		}
 		let path = "users/".to_string() + &self.conf.get_client().get_user_id() + "/conferences/"
 			+ &self.conf.get_id() + "/members/" + &self.id;
@@ -61,14 +61,14 @@ impl Member{
 	}
 	
 	/* Actions */
-	pub fn remove(&self) -> BResult<()>{
+	pub fn remove(&self) -> CatapultResult<()>{
 		try!(self.post(json!({
 			"state" => "completed"
 		})));
 		self.data.lock().unwrap().state = Available(State::Completed);
 		Ok(())
 	}
-	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> BResult<()>{
+	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> CatapultResult<()>{
 		let client = self.conf.get_client();
 		let user_id = client.get_user_id();
 		let conf_id = self.conf.get_id();
@@ -83,7 +83,7 @@ impl Member{
 		let _:EmptyResponse = try!(client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> BResult<()>{
+	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> CatapultResult<()>{
 		let client = self.conf.get_client();
 		let user_id = client.get_user_id();
 		let conf_id = self.conf.get_id();
@@ -99,7 +99,7 @@ impl Member{
 	}
 	///Stops either an audio file playing, or a sentence being spoken
 	///This is the only way to stop audio in a loop
-	pub fn stop_audio(&self) -> BResult<()>{
+	pub fn stop_audio(&self) -> CatapultResult<()>{
 		let client = self.conf.get_client();
 		let user_id = client.get_user_id();
 		let conf_id = self.conf.get_id();
@@ -133,49 +133,49 @@ impl Member{
 	pub fn get_client(&self) -> Client{
 		self.conf.get_client().clone()
 	}
-	pub fn get_added_time(&self) -> BResult<String>{
+	pub fn get_added_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().added_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().added_time.get()).clone())
 	}
-	pub fn get_removed_time(&self) -> BResult<Option<String>>{
+	pub fn get_removed_time(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().removed_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().removed_time.get()).clone())
 	}
-	pub fn get_join_tone(&self) -> BResult<bool>{
+	pub fn get_join_tone(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().join_tone.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().join_tone.get()).clone())
 	}
-	pub fn get_leaving_tone(&self) -> BResult<bool>{
+	pub fn get_leaving_tone(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().leaving_tone.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().leaving_tone.get()).clone())
 	}
-	pub fn get_mute(&self) -> BResult<bool>{
+	pub fn get_mute(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().mute.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().mute.get()).clone())
 	}
-	pub fn get_hold(&self) -> BResult<bool>{
+	pub fn get_hold(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().hold.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().hold.get()).clone())
 	}
-	pub fn get_state(&self) -> BResult<State>{
+	pub fn get_state(&self) -> CatapultResult<State>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn list_members_from_conference(conf: &Conference) -> BResult<Vec<Member>>{
+	pub fn list_members_from_conference(conf: &Conference) -> CatapultResult<Vec<Member>>{
 		let client = conf.get_client();
 		let path = "users/".to_string() + &client.get_user_id() + "/conferences/"
 			+ &conf.get_id() + "/members";
@@ -202,7 +202,7 @@ struct Data{
 	state: Lazy<State>
 }
 impl Data{
-	fn from_info(info: &MemberInfo) -> BResult<Data>{
+	fn from_info(info: &MemberInfo) -> CatapultResult<Data>{
 		Ok(Data{
 			added_time: Available(info.addedTime.to_owned()),
 			removed_time: Available(info.removedTime.to_owned()),
@@ -213,7 +213,7 @@ impl Data{
 			state: Available(match info.state.as_ref(){
 				"active" => State::Active,
 				"completed" => State::Completed,
-				state @ _ => return Err(BError::unexpected(
+				state @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown member state: {}", state)
 				))
 			}),
@@ -266,7 +266,7 @@ impl MemberBuilder{
 			hold: false
 		}
 	}
-	pub fn create(self) -> BResult<Member>{
+	pub fn create(self) -> CatapultResult<Member>{
 		let path = "users/".to_string() + &self.conf.get_client().get_user_id() + "/conferences/" + &self.conf.get_id() + "/members";
 		let json = json!({
 			"callId" => (self.call_id),

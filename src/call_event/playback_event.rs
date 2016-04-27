@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 use error::BError;
 
 #[derive(Clone)]
@@ -15,7 +15,7 @@ pub struct PlaybackEvent{
 	time: String
 }
 impl PlaybackEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<PlaybackEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<PlaybackEvent>{
 		let status_string:String = try!(util::expect(info.status.clone(), "PlaybackEvent::status"));
 		
 		Ok(PlaybackEvent{

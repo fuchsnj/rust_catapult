@@ -2,14 +2,14 @@ Bandwidth Communication SDK
 ====
 [![Build Status](https://travis-ci.org/bandwidthcom/rust-bandwidth.svg?branch=master)](https://travis-ci.org/bandwidthcom/rust-bandwidth)
 
-A Rust SDK for [Bandwidth's Communication API](http://ap.bandwidth.com/)
+A Rust SDK for [Catapult](http://ap.bandwidth.com/) (Bandwidth's Application Platform)
 that focuses on ease of use and efficiency.
 
 Note that this SDK is not yet feature complete, and is still undergoing major changes.
 
 ## Documentation
 
-http://bandwidthcom.github.io/rust-bandwidth
+http://bandwidthcom.github.io/catapult
 
 ## Usage
 
@@ -17,14 +17,14 @@ This will be uploaded to crates.io when it is more stable.
 For now, add the following to your `Cargo.toml`
 
 ```toml
-[dependencies.bandwidth_communication]
+[dependencies.catapult]
 git = "https://github.com/bandwidthcom/rust-bandwidth"
 ```
 
 and this to your crate root:
 
 ```rust
-extern crate bandwidth_communication;
+extern crate catapult;
 ```
 
 ## Quick Start

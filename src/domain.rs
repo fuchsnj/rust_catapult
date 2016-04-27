@@ -1,9 +1,9 @@
-use {Client, BResult, Endpoint};
+use {Client, CatapultResult, Endpoint};
 use client::{JsonResponse, EmptyResponse};
 use std::sync::{Mutex, Arc};
 use lazy::Lazy;
 use util;
-use error::BError;
+use error::CatapultError;
 use endpoint;
 
 pub struct Domain{
@@ -24,10 +24,10 @@ struct DomainInfo{
 }
 
 impl Domain{
-	fn load(&self) -> BResult<()>{
+	fn load(&self) -> CatapultResult<()>{
 		//if id = empty string, this will return all domains
 		if self.get_id().len() == 0{
-			return Err(BError::bad_input("invalid app id"))
+			return Err(CatapultError::bad_input("invalid app id"))
 		}
 		
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.id;
@@ -36,7 +36,7 @@ impl Domain{
 		data.name = Lazy::Available(res.body.name);
 		Ok(())
 	}
-	pub fn create(client: &Client, name: &str) -> BResult<Domain>{
+	pub fn create(client: &Client, name: &str) -> CatapultResult<Domain>{
 		let path = "users/".to_string() + &client.get_user_id() + "/domains";
 		let json = json!({
 			"name" => (name)
@@ -60,7 +60,7 @@ impl Domain{
 		}
 	}
 	
-	pub fn get_by_name(client: &Client, name: &str) -> BResult<Option<Domain>>{
+	pub fn get_by_name(client: &Client, name: &str) -> CatapultResult<Option<Domain>>{
 		let domains = try!(Self::list(client));
 		for domain in domains{
 			if try!(domain.get_name()) == name{
@@ -69,7 +69,7 @@ impl Domain{
 		}
 		Ok(None)
 	}
-	pub fn list(client: &Client) -> BResult<Vec<Domain>>{
+	pub fn list(client: &Client) -> CatapultResult<Vec<Domain>>{
 		let path = "users/".to_string() + &client.get_user_id() + "/domains";
 		let res:JsonResponse<Vec<DomainInfo>> = try!(client.raw_get_request(&path, (), ()));
 		
@@ -91,7 +91,7 @@ impl Domain{
 	pub fn get_id(&self) -> String{
 		self.id.clone()
 	}
-	pub fn get_name(&self) -> BResult<String>{
+	pub fn get_name(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().name.available(){
 			try!(self.load());
 		}

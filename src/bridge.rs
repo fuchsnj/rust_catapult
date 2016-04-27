@@ -1,5 +1,5 @@
 use client::{EmptyResponse, JsonResponse, Client};
-use BResult;
+use CatapultResult;
 use lazy::Lazy;
 use lazy::Lazy::*;
 use std::sync::{Arc, Mutex};
@@ -22,7 +22,7 @@ struct Data{
 	completed_time: Lazy<Option<String>>
 }
 impl Data{
-	fn from_info(info: &BridgeInfo) -> BResult<Data>{
+	fn from_info(info: &BridgeInfo) -> CatapultResult<Data>{
 		Ok(Data{
 			state: Available(info.state.clone()),
 			bridge_audio: Available(info.bridgeAudio),
@@ -48,7 +48,7 @@ mod info{
 }
 
 impl Bridge{
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let res:JsonResponse<BridgeInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -68,7 +68,7 @@ impl Bridge{
 			}))
 		}
 	}
-	pub fn create(client: &Client, bridge_audio: bool, call_ids: &Vec<String>) -> BResult<Bridge>{
+	pub fn create(client: &Client, bridge_audio: bool, call_ids: &Vec<String>) -> CatapultResult<Bridge>{
 		let path = "users/".to_string() + &client.get_user_id() + "/bridges";
 		
 		let json = json!({
@@ -92,7 +92,7 @@ impl Bridge{
 	}
 	
 	/* Actions */
-	pub fn update(&self, bridge_audio: bool, call_ids: &Vec<String>) -> BResult<()>{
+	pub fn update(&self, bridge_audio: bool, call_ids: &Vec<String>) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
 			"bridgeAudio" => (bridge_audio),
@@ -102,7 +102,7 @@ impl Bridge{
 		Ok(())
 	}
 	
-	pub fn remove_all_calls(&self) -> BResult<()>{
+	pub fn remove_all_calls(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
 			"callIds" => (Vec::<String>::new())
@@ -110,7 +110,7 @@ impl Bridge{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn enable_audio(&self, enable: bool) -> BResult<()>{
+	pub fn enable_audio(&self, enable: bool) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id;
 		let json = json!({
 			"bridgeAudio" => (enable)
@@ -118,7 +118,7 @@ impl Bridge{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn play_audio_file(&self, url: &str, loop_audio: bool) -> BResult<()>{
+	pub fn play_audio_file(&self, url: &str, loop_audio: bool) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/bridges/" + &self.id + "/audio";
 		let json = json!({
 			"fileUrl" => (url),
@@ -135,35 +135,35 @@ impl Bridge{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn get_calls(&self) -> BResult<Vec<Call>>{
+	pub fn get_calls(&self) -> CatapultResult<Vec<Call>>{
 		Call::get_calls_from_bridge(self)
 	}
 	
-	pub fn get_state(&self) -> BResult<String>{
+	pub fn get_state(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn get_bridge_audio(&self) -> BResult<bool>{
+	pub fn get_bridge_audio(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().bridge_audio.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().bridge_audio.get()).clone())
 	}
-	pub fn get_created_time(&self) -> BResult<String>{
+	pub fn get_created_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().created_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().created_time.get()).clone())
 	}
-	pub fn get_activated_time(&self) -> BResult<Option<String>>{
+	pub fn get_activated_time(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().activated_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().activated_time.get()).clone())
 	}
-	pub fn get_completed_time(&self) -> BResult<Option<String>>{
+	pub fn get_completed_time(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().completed_time.available(){
 			try!(self.load());
 		}

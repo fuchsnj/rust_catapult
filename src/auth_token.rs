@@ -1,4 +1,4 @@
-use {BResult, Endpoint};
+use {CatapultResult, Endpoint};
 use client::JsonResponse;
 
 #[derive(RustcDecodable)]
@@ -8,7 +8,7 @@ pub struct AuthToken{
 }
 
 impl AuthToken{
-	pub fn create(endpoint: &Endpoint) -> BResult<AuthToken>{
+	pub fn create(endpoint: &Endpoint) -> CatapultResult<AuthToken>{
 		let client = endpoint.get_client();
 		let domain = endpoint.get_domain();
 		let path = "users/".to_string() + &client.get_user_id() + "/domains/" + &domain.get_id()

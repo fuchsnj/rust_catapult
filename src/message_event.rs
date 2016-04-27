@@ -1,4 +1,4 @@
-use {BResult, BError};
+use {CatapultResult, CatapultError};
 use client::Client;
 use self::info::MessageEventInfo;
 use rustc_serialize::json;
@@ -20,7 +20,7 @@ pub struct MessageEvent{
 	media: Vec<Media>
 }
 impl MessageEvent{
-	pub fn parse(client: &Client, data: &str) -> BResult<MessageEvent>{
+	pub fn parse(client: &Client, data: &str) -> CatapultResult<MessageEvent>{
 		let info: MessageEventInfo = try!(json::decode(data));
 		Ok(MessageEvent{
 			client: client.clone(),
@@ -32,7 +32,7 @@ impl MessageEvent{
 			inbound: match info.direction.as_ref(){
 				"in" => true,
 				"out" => false,
-				direction @ _ => return Err(BError::unexpected(
+				direction @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown MessageEvent direction: {}", direction)
 				))
 			},

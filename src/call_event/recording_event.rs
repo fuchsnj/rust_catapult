@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 use error::BError;
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub struct RecordingEvent{
 }
 
 impl RecordingEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<RecordingEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<RecordingEvent>{
 		let status_string:String = try!(util::expect(info.status.clone(), "RecordingEvent::status"));
 		Ok(RecordingEvent{
 			status:  match status_string.as_ref(){

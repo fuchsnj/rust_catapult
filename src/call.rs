@@ -1,4 +1,4 @@
-use {BResult, BError};
+use {CatapultResult, CatapultError};
 use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use call_event::CallEvent;
@@ -39,7 +39,7 @@ struct Data{
 	end_time: Lazy<Option<String>>
 }
 impl Data{
-	fn from_info(info: &CallInfo) -> BResult<Data>{
+	fn from_info(info: &CallInfo) -> CatapultResult<Data>{
 		Ok(Data{
 			active_time: Available(info.activeTime.clone()),
 			bridge_id: Available(match info.bridge{
@@ -58,7 +58,7 @@ impl Data{
 				"active" => State::Active,
 				"completed" => State::Completed,
 				"transferring" => State::Transferring,
-				state @ _ => return Err(BError::unexpected(
+				state @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown Call state: {}", state)
 				))
 			}),
@@ -241,7 +241,7 @@ impl CallBuilder{
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.config.tag = Some(tag.to_owned()); self
 	}
-	pub fn create(self) -> BResult<Call>{
+	pub fn create(self) -> CatapultResult<Call>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
 		let json = json!({
 			"from" => (self.from),
@@ -293,7 +293,7 @@ pub struct Call{
 }
 
 impl Call{
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id;
 		let res:JsonResponse<CallInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -309,7 +309,7 @@ impl Call{
 			config: Config::new()
 		}
 	}
-	pub fn get_calls_from_bridge(bridge: &Bridge) -> BResult<Vec<Call>>{
+	pub fn get_calls_from_bridge(bridge: &Bridge) -> CatapultResult<Vec<Call>>{
 		let client = bridge.get_client();
 		let path = "users/".to_string() + &client.get_user_id() + "/bridges/" + &bridge.get_id() + "/calls";
 		let res:JsonResponse<Vec<CallInfo>> = try!(client.raw_get_request(&path, (), ()));
@@ -347,19 +347,19 @@ impl Call{
 			}))
 		}
 	}
-	pub fn add_to_new_bridge(&self, bridge_audio: bool, additional_phone_ids: &Vec<String>) -> BResult<Bridge>{
+	pub fn add_to_new_bridge(&self, bridge_audio: bool, additional_phone_ids: &Vec<String>) -> CatapultResult<Bridge>{
 		let mut calls = additional_phone_ids.clone();
 		calls.push(self.get_id());
 		Bridge::create(&self.client, bridge_audio, &calls)
 	}
 	
 	/* Actions */
-	fn update(&self, json_data: &Json) -> BResult<()>{
+	fn update(&self, json_data: &Json) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id;
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), json_data));
 		Ok(())
 	}
-	pub fn hang_up(&self) -> BResult<()>{
+	pub fn hang_up(&self) -> CatapultResult<()>{
 		let mut data = self.data.lock().unwrap();
 		data.state = NotLoaded;
 		data.end_time = NotLoaded;
@@ -368,7 +368,7 @@ impl Call{
 		}))
 	}
 	
-	pub fn answer_incoming(&self) -> BResult<()>{
+	pub fn answer_incoming(&self) -> CatapultResult<()>{
 		let mut data = self.data.lock().unwrap();
 		data.state = NotLoaded;
 		data.active_time = NotLoaded;
@@ -376,7 +376,7 @@ impl Call{
 			"state" => "active"
 		}))
 	}
-	pub fn reject_incoming(&self) -> BResult<()>{
+	pub fn reject_incoming(&self) -> CatapultResult<()>{
 		let mut data = self.data.lock().unwrap();
 		data.state = NotLoaded;
 		data.active_time = NotLoaded;
@@ -384,7 +384,7 @@ impl Call{
 			"state" => "rejected"
 		}))
 	}
-	pub fn enable_recording(&self, enable: bool) -> BResult<()>{
+	pub fn enable_recording(&self, enable: bool) -> CatapultResult<()>{
 		let mut data = self.data.lock().unwrap();
 		data.recording_file_format = NotLoaded;
 		data.recording_enabled = Available(enable);
@@ -393,7 +393,7 @@ impl Call{
 			"recordingEnabled" => (enable)
 		}))
 	}
-	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> BResult<()>{
+	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
 			"fileUrl" => (url),
@@ -405,7 +405,7 @@ impl Call{
 	}
 	///Stops either an audio file playing, or a sentence being spoken
 	///This is the only way to stop audio in a loop
-	pub fn stop_audio(&self) -> BResult<()>{
+	pub fn stop_audio(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
 			"fileUrl" => ""
@@ -413,7 +413,7 @@ impl Call{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> BResult<()>{
+	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/audio";
 		let json = json!({
 			"sentence" => (sentence),
@@ -424,7 +424,7 @@ impl Call{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn send_dtmf(&self, digits: &str) -> BResult<()>{
+	pub fn send_dtmf(&self, digits: &str) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/dtmf";
 		let json = json!({
 			"dtmfOut" => (digits)
@@ -433,7 +433,7 @@ impl Call{
 		Ok(())
 	}
 	
-	pub fn gather_dtmf(&self, config: &GatherConfig) -> BResult<()>{
+	pub fn gather_dtmf(&self, config: &GatherConfig) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/gather";
 		let prompt = config.prompt.clone().map(|prompt|{
 			match prompt.prompt_type{
@@ -474,109 +474,109 @@ impl Call{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn get_active_time(&self) -> BResult<Option<String>>{
+	pub fn get_active_time(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().active_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().active_time.get()).clone())
 	}
-	pub fn get_bridge_id(&self) -> BResult<Option<String>>{
+	pub fn get_bridge_id(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().bridge_id.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().bridge_id.get()).clone())
 	}
-	pub fn get_callback_url(&self) -> BResult<Option<String>>{
+	pub fn get_callback_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().callback_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().callback_url.get()).clone())
 	}
-	pub fn get_direction(&self) -> BResult<String>{
+	pub fn get_direction(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().direction.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().direction.get()).clone())
 	}
-	pub fn get_from(&self) -> BResult<String>{
+	pub fn get_from(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().from.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().from.get()).clone())
 	}
-	pub fn get_recording_file_format(&self) -> BResult<Option<String>>{
+	pub fn get_recording_file_format(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().recording_file_format.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().recording_file_format.get()).clone())
 	}
-	pub fn get_recording_enabled(&self) -> BResult<bool>{
+	pub fn get_recording_enabled(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().recording_enabled.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().recording_enabled.get()).clone())
 	}
-	pub fn get_start_time(&self) -> BResult<String>{
+	pub fn get_start_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().start_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().start_time.get()).clone())
 	}
-	pub fn get_state(&self) -> BResult<State>{
+	pub fn get_state(&self) -> CatapultResult<State>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn get_to(&self) -> BResult<String>{
+	pub fn get_to(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().to.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().to.get()).clone())
 	}
-	pub fn get_transcription_enabled(&self) -> BResult<bool>{
+	pub fn get_transcription_enabled(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().transcription_enabled.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().transcription_enabled.get()).clone())
 	}
-	pub fn get_display_name(&self) -> BResult<Option<String>>{
+	pub fn get_display_name(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().display_name.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().display_name.get()).clone())
 	}
-	pub fn get_preferred_id(&self) -> BResult<Option<String>>{
+	pub fn get_preferred_id(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().preferred_id.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().preferred_id.get()).clone())
 	}
-	pub fn get_withhold_caller_name(&self) -> BResult<Option<bool>>{
+	pub fn get_withhold_caller_name(&self) -> CatapultResult<Option<bool>>{
 		if !self.data.lock().unwrap().withhold_caller_name.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().withhold_caller_name.get()).clone())
 	}
-	pub fn get_withhold_caller_number(&self) -> BResult<Option<bool>>{
+	pub fn get_withhold_caller_number(&self) -> CatapultResult<Option<bool>>{
 		if !self.data.lock().unwrap().withhold_caller_number.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().withhold_caller_number.get()).clone())
 	}
 	
-	pub fn get_bridge(&self) -> BResult<Option<Bridge>>{
+	pub fn get_bridge(&self) -> CatapultResult<Option<Bridge>>{
 		Ok(match try!(self.get_bridge_id()){
 			Some(id) => Some(Bridge::get_by_id(&self.client, &id)),
 			None => None
 		})
 	}
-	pub fn get_events(&self) -> BResult<Vec<Event>>{
+	pub fn get_events(&self) -> CatapultResult<Vec<Event>>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/events";
 		let res:JsonResponse<Vec<Event>> = try!(self.client.raw_get_request(&path, (), ()));
 		Ok(res.body)
 	}
-	pub fn get_event(&self, id: &str) -> BResult<Event>{
+	pub fn get_event(&self, id: &str) -> CatapultResult<Event>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/events/" + id;
 		let res:JsonResponse<Event> = try!(self.client.raw_get_request(&path, (), ()));
 		Ok(res.body)

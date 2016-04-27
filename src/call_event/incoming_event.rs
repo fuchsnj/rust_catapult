@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 
 pub struct IncomingEvent{
 	from: String,
@@ -11,7 +11,7 @@ pub struct IncomingEvent{
 }
 
 impl IncomingEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<IncomingEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<IncomingEvent>{
 		Ok(IncomingEvent{
 			from: try!(util::expect(info.from.clone(), "IncomingCall::from")),
 			to: try!(util::expect(info.to.clone(), "IncomingCall::to")),

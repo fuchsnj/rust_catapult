@@ -1,6 +1,6 @@
 [package]
-name = "bandwidth_communication"
-version = "0.1.0"
+name = "catapult"
+version = "0.2.0"
 authors = ["Nathan Fuchs <fuchsnj@gmail.com>"]
 
 [dependencies]

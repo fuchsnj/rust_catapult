@@ -1,4 +1,4 @@
-use {Client, BResult, Domain};
+use {Client, CatapultResult, Domain};
 use application::Application;
 use auth_token::AuthToken;
 use client::{JsonResponse, EmptyResponse};
@@ -59,7 +59,7 @@ impl EndpointBuilder{
 	pub fn disable(mut self) -> Self{
 		self.enabled = false; self
 	}
-	pub fn create(self) -> BResult<Endpoint>{
+	pub fn create(self) -> CatapultResult<Endpoint>{
 		let json = json!({
 			"name" => (self.name),
 			"description" => (self.description),
@@ -98,7 +98,7 @@ pub struct Endpoint{
 	data: Arc<Mutex<Data>>
 }
 impl Endpoint{
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.domain_id + "/endpoints/" + &self.id;
 		let res:JsonResponse<EndpointInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
@@ -111,7 +111,7 @@ impl Endpoint{
 		data.sip_uri = Available(res.body.sipUri);
 		Ok(())
 	}
-	pub fn save(&self) -> BResult<()>{
+	pub fn save(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/domains/" + &self.domain_id + "/endpoints/" + &self.id;
 		let data = self.data.lock().unwrap();
 		let mut map = BTreeMap::new();
@@ -161,7 +161,7 @@ impl Endpoint{
 			enabled: true
 		}
 	}
-	pub fn create_auth_token(&self) -> BResult<AuthToken>{
+	pub fn create_auth_token(&self) -> CatapultResult<AuthToken>{
 		AuthToken::create(self)
 	}
 	
@@ -175,50 +175,50 @@ impl Endpoint{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn get_name(&self) -> BResult<String>{
+	pub fn get_name(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().name.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().name.get()).clone())
 	}
-	pub fn get_description(&self) -> BResult<Option<String>>{
+	pub fn get_description(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().description.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().description.get()).clone())
 	}
-	pub fn get_enabled(&self) -> BResult<bool>{
+	pub fn get_enabled(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().enabled.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().enabled.get()).clone())
 	}
-	pub fn get_application_id(&self) -> BResult<String>{
+	pub fn get_application_id(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().application_id.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().application_id.get()).clone())
 	}
-	pub fn get_realm(&self) -> BResult<String>{
+	pub fn get_realm(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().realm.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().realm.get()).clone())
 	}
-	pub fn get_username(&self) -> BResult<String>{
+	pub fn get_username(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().username.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().username.get()).clone())
 	}
-	pub fn get_sip_uri(&self) -> BResult<String>{
+	pub fn get_sip_uri(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().sip_uri.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().sip_uri.get()).clone())
 	}
 	
-	pub fn get_application(&self) -> BResult<Application>{
+	pub fn get_application(&self) -> CatapultResult<Application>{
 		let app_id = try!(self.get_application_id());
 		Ok(Application::get(&self.client, &app_id))
 	}

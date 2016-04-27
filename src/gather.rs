@@ -1,7 +1,7 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
-use error::BError;
+use CatapultResult;
+use error::CatapultError;
 
 #[derive(Clone)]
 pub enum Reason{
@@ -21,7 +21,7 @@ struct Data{
 	time: String
 }
 impl GatherEvent{
-	pub fn new(client: &Client, info: &CallEventInfo) -> BResult<Gather>{
+	pub fn new(client: &Client, info: &CallEventInfo) -> CatapultResult<Gather>{
 		let reason_string = try!(util::expect(info.reason.clone(), "GatherEvent::reason"));
 		Ok(Gather{
 			digits: try!(util::expect(info.digits.clone(), "GatherEvent::digits")),
@@ -30,7 +30,7 @@ impl GatherEvent{
 				"terminating-digit" => Reason::TerminatingDigit,
 				"inter-digit-timeout" => Reason::InterDigitTimeout,
 				"hung-up" => Reason::HungUp,
-				reason @ _ => return Err(BError::unexpected(
+				reason @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown GatherEvent reason: {}", reason)
 				))
 			},

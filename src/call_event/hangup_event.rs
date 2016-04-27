@@ -1,6 +1,6 @@
 use call_event::info::CallEventInfo;
 use util;
-use BResult;
+use CatapultResult;
 use error::BError;
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub struct HangupEvent{
 	time: String
 }
 impl HangupEvent{
-	pub fn new(info: &CallEventInfo) -> BResult<HangupEvent>{
+	pub fn new(info: &CallEventInfo) -> CatapultResult<HangupEvent>{
 		let cause_string = try!(util::expect(info.cause.clone(), "HangupEvent::cause"));
 		Ok(HangupEvent{
 			from: try!(util::expect(info.from.clone(), "HangupEvent::from")),

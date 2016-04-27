@@ -1,4 +1,4 @@
-use {BError, BResult, Client};
+use {BError, CatapultResult, Client};
 use rustc_serialize::json;
 use call::Call;
 use self::info::CallEventInfo;
@@ -76,7 +76,7 @@ mod info{
 }
 
 impl CallEvent{
-	pub fn parse(client: &Client, data: &str) -> BResult<CallEvent>{
+	pub fn parse(client: &Client, data: &str) -> CatapultResult<CallEvent>{
 		let info: CallEventInfo = try!(json::decode(data));
 		let event_type = match info.eventType.as_ref(){
 			"incomingcall" => EventType::Incoming(try!(IncomingEvent::new(&info))),

@@ -7,7 +7,7 @@ use lazy::LazyError;
 use std::string::FromUtf8Error;
 
 #[derive(Debug)]
-pub enum BError{
+pub enum CatapultError{
 	EncoderError(json::EncoderError),
 	DecoderError(json::DecoderError),
 	NetworkError(hyper::error::Error),
@@ -27,59 +27,59 @@ pub struct ApiError{
 	message: String
 }
 
-impl convert::From<hyper::error::Error> for BError{
-	fn from(err: hyper::error::Error) -> BError{
-		BError::NetworkError(err)
+impl convert::From<hyper::error::Error> for CatapultError{
+	fn from(err: hyper::error::Error) -> CatapultError{
+		CatapultError::NetworkError(err)
 	}
 }
-//impl convert::From<FromUtf8Error> for BError{
-//	fn from(err: FromUtf8Error) -> BError{
-//		BError::SerializationError("Utf8Error".to_string())
+//impl convert::From<FromUtf8Error> for CatapultError{
+//	fn from(err: FromUtf8Error) -> CatapultError{
+//		CatapultError::SerializationError("Utf8Error".to_string())
 //	}
 //}
-impl convert::From<FromUtf8Error> for BError{
-	fn from(_: FromUtf8Error) -> BError{
-		BError::Utf8Error
+impl convert::From<FromUtf8Error> for CatapultError{
+	fn from(_: FromUtf8Error) -> CatapultError{
+		CatapultError::Utf8Error
 	}
 }
-impl convert::From<json::EncoderError> for BError{
-	fn from(err: json::EncoderError) -> BError{
-		BError::EncoderError(err)
+impl convert::From<json::EncoderError> for CatapultError{
+	fn from(err: json::EncoderError) -> CatapultError{
+		CatapultError::EncoderError(err)
 	}
 }
-impl convert::From<json::DecoderError> for BError{
-	fn from(err: json::DecoderError) -> BError{
-		BError::DecoderError(err)
+impl convert::From<json::DecoderError> for CatapultError{
+	fn from(err: json::DecoderError) -> CatapultError{
+		CatapultError::DecoderError(err)
 	}
 }
-impl convert::From<io::Error> for BError{
-	fn from(err: io::Error) -> BError{
-		BError::IoError(err)
+impl convert::From<io::Error> for CatapultError{
+	fn from(err: io::Error) -> CatapultError{
+		CatapultError::IoError(err)
 	}
 }
-impl convert::From<url::ParseError> for BError{
-	fn from(_: url::ParseError) -> BError{
-		BError::InvalidUrl
-	}
-}
-
-impl convert::From<LazyError> for BError{
-	fn from(_: LazyError) -> BError{
-		BError::InternalError("Lazy::get() failed".to_string())
+impl convert::From<url::ParseError> for CatapultError{
+	fn from(_: url::ParseError) -> CatapultError{
+		CatapultError::InvalidUrl
 	}
 }
 
-impl BError{
-	pub fn api_error(msg: &str) -> BError{
+impl convert::From<LazyError> for CatapultError{
+	fn from(_: LazyError) -> CatapultError{
+		CatapultError::InternalError("Lazy::get() failed".to_string())
+	}
+}
+
+impl CatapultError{
+	pub fn api_error(msg: &str) -> CatapultError{
 		match json::decode(msg){
-			Ok(err) => BError::ApiError(err),
-			Err(err) => BError::DecoderError(err)
+			Ok(err) => CatapultError::ApiError(err),
+			Err(err) => CatapultError::DecoderError(err)
 		}
 	}
-	pub fn unexpected(msg: &str) -> BError{
-		BError::Unexpected(msg.to_owned())
+	pub fn unexpected(msg: &str) -> CatapultError{
+		CatapultError::Unexpected(msg.to_owned())
 	}
-	pub fn bad_input(msg: &str) -> BError{
-		BError::BadInput(msg.to_owned())
+	pub fn bad_input(msg: &str) -> CatapultError{
+		CatapultError::BadInput(msg.to_owned())
 	}
 }

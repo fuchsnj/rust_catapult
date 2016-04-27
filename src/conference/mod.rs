@@ -2,7 +2,7 @@ mod member;
 
 pub use self::member::{Member, MemberBuilder};
 
-use {BResult, BError};
+use {CatapultResult, CatapultError};
 use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use util;
@@ -39,7 +39,7 @@ struct Data{
 	tag: Lazy<Option<String>>
 }
 impl Data{
-	fn from_info(info: &ConferenceInfo) -> BResult<Data>{
+	fn from_info(info: &ConferenceInfo) -> CatapultResult<Data>{
 		Ok(Data{
 			active_members: Available(info.activeMembers),
 			created_time: Available(info.createdTime.to_owned()),
@@ -48,7 +48,7 @@ impl Data{
 				"created" => State::Created,
 				"active" => State::Active,
 				"completed" => State::Completed,
-				state @ _ => return Err(BError::unexpected(
+				state @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown Conference state: {}", state)
 				))
 			}),
@@ -107,7 +107,7 @@ impl ConferenceBuilder{
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.tag = Some(tag.to_owned()); self
 	}
-	pub fn create(self) -> BResult<Conference>{
+	pub fn create(self) -> CatapultResult<Conference>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/conferences";
 		let json = json!({
 			"from" => (self.from),
@@ -147,14 +147,14 @@ pub struct Conference{
 }
 
 impl Conference{
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/conferences/" + &self.id;
 		let res:JsonResponse<ConferenceInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
 		*data = try!(Data::from_info(&res.body));
 		Ok(())
 	}
-	pub fn save(&self) -> BResult<()>{
+	pub fn save(&self) -> CatapultResult<()>{
 		let user_id = self.client.get_user_id();
 		let path = "users/".to_string() + &user_id + "/conferences/" + &self.get_id();
 		let mut map = BTreeMap::new();
@@ -225,71 +225,71 @@ impl Conference{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn list_members(&self) -> BResult<Vec<Member>>{
+	pub fn list_members(&self) -> CatapultResult<Vec<Member>>{
 		Member::list_members_from_conference(self)
 	}
 	
-	pub fn get_active_members(&self) -> BResult<u64>{
+	pub fn get_active_members(&self) -> CatapultResult<u64>{
 		if !self.data.lock().unwrap().active_members.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().active_members.get()).clone())
 	}
-	pub fn get_created_time(&self) -> BResult<String>{
+	pub fn get_created_time(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().created_time.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().created_time.get()).clone())
 	}
-	pub fn get_from(&self) -> BResult<String>{
+	pub fn get_from(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().from.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().from.get()).clone())
 	}
-	pub fn get_state(&self) -> BResult<State>{
+	pub fn get_state(&self) -> CatapultResult<State>{
 		if !self.data.lock().unwrap().state.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().state.get()).clone())
 	}
-	pub fn get_callback_http_method(&self) -> BResult<String>{
+	pub fn get_callback_http_method(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().callback_http_method.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().callback_http_method.get()).clone())
 	}
-	pub fn get_hold(&self) -> BResult<bool>{
+	pub fn get_hold(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().hold.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().hold.get()).clone())
 	}
-	pub fn get_mute(&self) -> BResult<bool>{
+	pub fn get_mute(&self) -> CatapultResult<bool>{
 		if !self.data.lock().unwrap().mute.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().mute.get()).clone())
 	}
-	pub fn get_callback_url(&self) -> BResult<Option<String>>{
+	pub fn get_callback_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().callback_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().callback_url.get()).clone())
 	}
-	pub fn get_fallback_url(&self) -> BResult<Option<String>>{
+	pub fn get_fallback_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().fallback_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().fallback_url.get()).clone())
 	}
-	pub fn get_callback_timeout(&self) -> BResult<u64>{
+	pub fn get_callback_timeout(&self) -> CatapultResult<u64>{
 		if !self.data.lock().unwrap().callback_timeout.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().callback_timeout.get()).clone())
 	}
-	pub fn get_tag(&self) -> BResult<Option<String>>{
+	pub fn get_tag(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().tag.available(){
 			try!(self.load());
 		}
@@ -304,7 +304,7 @@ impl Conference{
 	pub fn build_member(&self, call_id: &str) -> MemberBuilder{
 		MemberBuilder::new(self, call_id)
 	}
-	pub fn end(&self) -> BResult<()>{
+	pub fn end(&self) -> CatapultResult<()>{
 		let user_id = self.client.get_user_id();
 		let path = "users/".to_string() + &user_id + "/conferences/" + &self.get_id();
 		let json = json!({
@@ -314,7 +314,7 @@ impl Conference{
 		Ok(())
 	}
 	
-	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> BResult<()>{
+	pub fn speak_sentence(&self, sentence: &str, loop_audio: bool, voice: Voice, tag: Option<&str>) -> CatapultResult<()>{
 		let user_id = self.client.get_user_id();
 		let path = "users/".to_string() + &user_id + "/conferences/" + &self.get_id() + "/audio";
 		let json = json!({
@@ -326,7 +326,7 @@ impl Conference{
 		let _:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
 		Ok(())
 	}
-	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> BResult<()>{
+	pub fn play_audio_file(&self, url: &str, loop_audio: bool, tag: Option<&str>) -> CatapultResult<()>{
 		let user_id = self.client.get_user_id();
 		let path = "users/".to_string() + &user_id + "/conferences/" + &self.get_id() + "/audio";
 		let json = json!({

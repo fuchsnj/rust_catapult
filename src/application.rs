@@ -1,12 +1,12 @@
 use client::{EmptyResponse, JsonResponse, Client};
-use BResult;
+use CatapultResult;
 use util;
 use lazy::Lazy;
 use lazy::Lazy::*;
 use std::sync::{Arc, Mutex};
 use std::collections::BTreeMap;
 use rustc_serialize::json::{Json, ToJson};
-use error::BError;
+use error::CatapultError;
 use self::info::ApplicationInfo;
 
 
@@ -70,7 +70,7 @@ impl ApplicationBuilder{
 	pub fn disable_auto_answer(mut self) -> Self{
 		self.auto_answer = false; self
 	}
-	pub fn create(self) -> BResult<Application>{
+	pub fn create(self) -> CatapultResult<Application>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications";
 		let json = json!({
 			"name" => (self.name),
@@ -143,10 +143,10 @@ impl Application{
 		}
 	}
 	
-	pub fn load(&self) -> BResult<()>{
+	pub fn load(&self) -> CatapultResult<()>{
 		//if id = empty string, this will return all apps
 		if self.get_id().len() == 0{
-			return Err(BError::bad_input("invalid app id"))
+			return Err(CatapultError::bad_input("invalid app id"))
 		}
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
 		let res:JsonResponse<ApplicationInfo> = try!(self.client.raw_get_request(&path, (), ()));
@@ -162,7 +162,7 @@ impl Application{
 		data.auto_answer = Available(res.body.autoAnswer);
 		Ok(())
 	}
-	pub fn save(&self) -> BResult<()>{
+	pub fn save(&self) -> CatapultResult<()>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
 		let data = self.data.lock().unwrap();
 		let mut map = BTreeMap::new();
@@ -205,49 +205,49 @@ impl Application{
 	pub fn get_client(&self) -> Client{
 		self.client.clone()
 	}
-	pub fn get_name(&self) -> BResult<String>{
+	pub fn get_name(&self) -> CatapultResult<String>{
 		if !self.data.lock().unwrap().name.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().name.get()).clone())
 	}
-	pub fn get_incoming_call_url(&self) -> BResult<Option<String>>{
+	pub fn get_incoming_call_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().incoming_call_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().incoming_call_url.get()).clone())
 	}
-	pub fn get_incoming_call_url_callback_timeout(&self) -> BResult<Option<u64>>{
+	pub fn get_incoming_call_url_callback_timeout(&self) -> CatapultResult<Option<u64>>{
 		if !self.data.lock().unwrap().incoming_call_url_callback_timeout.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().incoming_call_url_callback_timeout.get()).clone())
 	}
-	pub fn get_incoming_call_fallback_url(&self) -> BResult<Option<String>>{
+	pub fn get_incoming_call_fallback_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().incoming_call_fallback_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().incoming_call_fallback_url.get()).clone())
 	}
-	pub fn get_incoming_message_url(&self) -> BResult<Option<String>>{
+	pub fn get_incoming_message_url(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().incoming_message_url.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().incoming_message_url.get()).clone())
 	}
-	pub fn get_incoming_message_url_callback_timeout(&self) -> BResult<Option<u64>>{
+	pub fn get_incoming_message_url_callback_timeout(&self) -> CatapultResult<Option<u64>>{
 		if !self.data.lock().unwrap().incoming_message_url_callback_timeout.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().incoming_message_url_callback_timeout.get()).clone())
 	}
-	pub fn get_callback_http_method(&self) -> BResult<Option<String>>{
+	pub fn get_callback_http_method(&self) -> CatapultResult<Option<String>>{
 		if !self.data.lock().unwrap().callback_http_method.available(){
 			try!(self.load());
 		}
 		Ok(try!(self.data.lock().unwrap().callback_http_method.get()).clone())
 	}
-	pub fn get_auto_answer(&self) -> BResult<Option<bool>>{
+	pub fn get_auto_answer(&self) -> CatapultResult<Option<bool>>{
 		if !self.data.lock().unwrap().auto_answer.available(){
 			try!(self.load());
 		}
