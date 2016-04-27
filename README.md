@@ -9,7 +9,7 @@ Note that this SDK is not yet feature complete, and is still undergoing major ch
 
 ## Documentation
 
-http://bandwidthcom.github.io/catapult
+http://bandwidthcom.github.io/rust-bandwidth/catapult
 
 ## Usage
 
