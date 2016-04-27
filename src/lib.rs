@@ -17,6 +17,16 @@ macro_rules! json {
   });
 }
 
+macro_rules! lazy_load {
+	($s:expr, $e:ident) => {{
+		if !$s.data.lock().unwrap().$e.available(){
+			try!($s.load());
+		}
+		Ok(try!($s.data.lock().unwrap().$e.get()).clone())
+	}};
+}
+
+pub mod account;
 pub mod application;
 pub mod call;
 pub mod call_event;
@@ -40,6 +50,7 @@ mod voice;
 
 pub type CatapultResult<T> = Result<T, error::CatapultError>;
 
+pub use account::Account;
 pub use application::Application;
 pub use auth_token::AuthToken;
 pub use error::CatapultError;
@@ -58,7 +69,7 @@ pub use voice::Voice;
 
 
 pub mod prelude{
-	pub use {CatapultError, CatapultResult, Client, Environment, Voice};
+	pub use {Account, CatapultError, CatapultResult, Client, Environment, Voice};
 	pub use {application, call, call_event, message, number};
 }
 
