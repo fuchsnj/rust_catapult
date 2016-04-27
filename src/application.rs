@@ -206,52 +206,28 @@ impl Application{
 		self.client.clone()
 	}
 	pub fn get_name(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().name.get()).clone())
+		lazy_load!(self, name)
 	}
 	pub fn get_incoming_call_url(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().incoming_call_url.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().incoming_call_url.get()).clone())
+		lazy_load!(self, incoming_call_url)
 	}
 	pub fn get_incoming_call_url_callback_timeout(&self) -> CatapultResult<Option<u64>>{
-		if !self.data.lock().unwrap().incoming_call_url_callback_timeout.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().incoming_call_url_callback_timeout.get()).clone())
+		lazy_load!(self, incoming_call_url_callback_timeout)
 	}
 	pub fn get_incoming_call_fallback_url(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().incoming_call_fallback_url.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().incoming_call_fallback_url.get()).clone())
+		lazy_load!(self, incoming_call_fallback_url)
 	}
 	pub fn get_incoming_message_url(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().incoming_message_url.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().incoming_message_url.get()).clone())
+		lazy_load!(self, incoming_message_url)
 	}
 	pub fn get_incoming_message_url_callback_timeout(&self) -> CatapultResult<Option<u64>>{
-		if !self.data.lock().unwrap().incoming_message_url_callback_timeout.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().incoming_message_url_callback_timeout.get()).clone())
+		lazy_load!(self, incoming_message_url_callback_timeout)
 	}
 	pub fn get_callback_http_method(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().callback_http_method.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().callback_http_method.get()).clone())
+		lazy_load!(self, callback_http_method)
 	}
 	pub fn get_auto_answer(&self) -> CatapultResult<Option<bool>>{
-		if !self.data.lock().unwrap().auto_answer.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().auto_answer.get()).clone())
+		lazy_load!(self, auto_answer)
 	}
 	
 	/* Setters */

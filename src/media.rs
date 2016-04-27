@@ -105,22 +105,13 @@ impl Media{
 	}
 	
 	pub fn get_content_type(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().content_type.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().content_type.get()).clone())
+		lazy_load!(self, content_type)
 	}
 	pub fn get_date(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().date.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().date.get()).clone())
+		lazy_load!(self, date)
 	}
 	pub fn get_content_length(&self) -> CatapultResult<u64>{
-		if !self.data.lock().unwrap().content_length.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().content_length.get()).clone())
+		lazy_load!(self, content_length)
 	}
 	pub fn get_contents(&self) -> CatapultResult<Vec<u8>>{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/media/" + &self.filename;

@@ -140,33 +140,18 @@ impl Bridge{
 	}
 	
 	pub fn get_state(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().state.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().state.get()).clone())
+		lazy_load!(self, state)
 	}
 	pub fn get_bridge_audio(&self) -> CatapultResult<bool>{
-		if !self.data.lock().unwrap().bridge_audio.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().bridge_audio.get()).clone())
+		lazy_load!(self, bridge_audio)
 	}
 	pub fn get_created_time(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().created_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().created_time.get()).clone())
+		lazy_load!(self, created_time)
 	}
 	pub fn get_activated_time(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().activated_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().activated_time.get()).clone())
+		lazy_load!(self, activated_time)
 	}
 	pub fn get_completed_time(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().completed_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().completed_time.get()).clone())
+		lazy_load!(self, completed_time)
 	}
 }
