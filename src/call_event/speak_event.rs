@@ -1,7 +1,7 @@
 use call_event::info::CallEventInfo;
 use util;
 use CatapultResult;
-use error::BError;
+use error::CatapultError;
 
 #[derive(Clone)]
 pub enum Status{
@@ -22,7 +22,7 @@ impl SpeakEvent{
 			status:  match status_string.as_ref(){
 				"started" => Status::Started,
 				"done" => Status::Done,
-				status @ _ => return Err(BError::unexpected(
+				status @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown SpeakEvent status: {}", status)
 				))
 			},

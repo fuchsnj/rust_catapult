@@ -1,4 +1,4 @@
-use {BError, CatapultResult, Client};
+use {CatapultError, CatapultResult, Client};
 use rustc_serialize::json;
 use call::Call;
 use self::info::CallEventInfo;
@@ -88,7 +88,7 @@ impl CallEvent{
 			"gather" => EventType::Gather(try!(GatherEvent::new(&info))),
 			"recording" => EventType::Recording(try!(RecordingEvent::new(&info))),
 			"speak" => EventType::Speak(try!(SpeakEvent::new(&info))),
-			event @ _ => return Err(BError::unexpected(&format!("unknown call event: {}", event)))
+			event @ _ => return Err(CatapultError::unexpected(&format!("unknown call event: {}", event)))
 		};
 		Ok(CallEvent{
 			client: client.clone(),

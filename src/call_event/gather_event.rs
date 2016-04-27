@@ -1,7 +1,7 @@
 use call_event::info::CallEventInfo;
 use util;
 use CatapultResult;
-use error::BError;
+use error::CatapultError;
 
 #[derive(Clone)]
 pub enum Reason{
@@ -28,7 +28,7 @@ impl GatherEvent{
 				"terminating-digit" => Reason::TerminatingDigit,
 				"inter-digit-timeout" => Reason::InterDigitTimeout,
 				"hung-up" => Reason::HungUp,
-				reason @ _ => return Err(BError::unexpected(
+				reason @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown GatherEvent reason: {}", reason)
 				))
 			},

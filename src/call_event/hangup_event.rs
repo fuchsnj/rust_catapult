@@ -1,7 +1,7 @@
 use call_event::info::CallEventInfo;
 use util;
 use CatapultResult;
-use error::BError;
+use error::CatapultError;
 
 #[derive(Clone)]
 pub enum Cause{
@@ -26,7 +26,7 @@ impl HangupEvent{
 				"NORMAL_CLEARING" => Cause::NormalClearing,
 				"CALL_REJECTED" => Cause::Rejected,
 				"USER_BUSY" => Cause::Busy,
-				status @ _ => return Err(BError::unexpected(
+				status @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown HangupEvent status: {}", status)
 				))
 			},

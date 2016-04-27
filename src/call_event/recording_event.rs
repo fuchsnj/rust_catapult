@@ -1,7 +1,7 @@
 use call_event::info::CallEventInfo;
 use util;
 use CatapultResult;
-use error::BError;
+use error::CatapultError;
 
 #[derive(Clone)]
 pub enum Status{
@@ -23,7 +23,7 @@ impl RecordingEvent{
 			status:  match status_string.as_ref(){
 				"complete" => Status::Complete,
 				"error" => Status::Error,
-				status @ _ => return Err(BError::unexpected(
+				status @ _ => return Err(CatapultError::unexpected(
 					&format!("unknown RecordingEvent status: {}", status)
 				))
 			},
