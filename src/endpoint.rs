@@ -176,46 +176,25 @@ impl Endpoint{
 		self.client.clone()
 	}
 	pub fn get_name(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().name.get()).clone())
+		lazy_load!(self, name)
 	}
 	pub fn get_description(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().description.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().description.get()).clone())
+		lazy_load!(self, description)
 	}
 	pub fn get_enabled(&self) -> CatapultResult<bool>{
-		if !self.data.lock().unwrap().enabled.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().enabled.get()).clone())
+		lazy_load!(self, enabled)
 	}
 	pub fn get_application_id(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().application_id.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().application_id.get()).clone())
+		lazy_load!(self, application_id)
 	}
 	pub fn get_realm(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().realm.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().realm.get()).clone())
+		lazy_load!(self, realm)
 	}
 	pub fn get_username(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().username.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().username.get()).clone())
+		lazy_load!(self, username)
 	}
 	pub fn get_sip_uri(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().sip_uri.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().sip_uri.get()).clone())
+		lazy_load!(self, sip_uri)
 	}
 	
 	pub fn get_application(&self) -> CatapultResult<Application>{

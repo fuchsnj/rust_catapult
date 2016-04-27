@@ -92,10 +92,7 @@ impl Domain{
 		self.id.clone()
 	}
 	pub fn get_name(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().name.get()).clone())
+		lazy_load!(self, name)
 	}
 	pub fn get_endpoint_by_id(&self, id: &str) -> Endpoint{
 		Endpoint::get_by_id(&self.client, id, &self.id)

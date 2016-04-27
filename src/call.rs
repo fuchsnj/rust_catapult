@@ -475,94 +475,49 @@ impl Call{
 		self.client.clone()
 	}
 	pub fn get_active_time(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().active_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().active_time.get()).clone())
+		lazy_load!(self, active_time)
 	}
 	pub fn get_bridge_id(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().bridge_id.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().bridge_id.get()).clone())
+		lazy_load!(self, bridge_id)
 	}
 	pub fn get_callback_url(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().callback_url.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().callback_url.get()).clone())
+		lazy_load!(self, callback_url)
 	}
 	pub fn get_direction(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().direction.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().direction.get()).clone())
+		lazy_load!(self, direction)
 	}
 	pub fn get_from(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().from.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().from.get()).clone())
+		lazy_load!(self, from)
 	}
 	pub fn get_recording_file_format(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().recording_file_format.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().recording_file_format.get()).clone())
+		lazy_load!(self, recording_file_format)
 	}
 	pub fn get_recording_enabled(&self) -> CatapultResult<bool>{
-		if !self.data.lock().unwrap().recording_enabled.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().recording_enabled.get()).clone())
+		lazy_load!(self, recording_enabled)
 	}
 	pub fn get_start_time(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().start_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().start_time.get()).clone())
+		lazy_load!(self, start_time)
 	}
 	pub fn get_state(&self) -> CatapultResult<State>{
-		if !self.data.lock().unwrap().state.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().state.get()).clone())
+		lazy_load!(self, state)
 	}
 	pub fn get_to(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().to.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().to.get()).clone())
+		lazy_load!(self, to)
 	}
 	pub fn get_transcription_enabled(&self) -> CatapultResult<bool>{
-		if !self.data.lock().unwrap().transcription_enabled.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().transcription_enabled.get()).clone())
+		lazy_load!(self, transcription_enabled)
 	}
 	pub fn get_display_name(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().display_name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().display_name.get()).clone())
+		lazy_load!(self, display_name)
 	}
 	pub fn get_preferred_id(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().preferred_id.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().preferred_id.get()).clone())
+		lazy_load!(self, preferred_id)
 	}
 	pub fn get_withhold_caller_name(&self) -> CatapultResult<Option<bool>>{
-		if !self.data.lock().unwrap().withhold_caller_name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().withhold_caller_name.get()).clone())
+		lazy_load!(self, withhold_caller_name)
 	}
 	pub fn get_withhold_caller_number(&self) -> CatapultResult<Option<bool>>{
-		if !self.data.lock().unwrap().withhold_caller_number.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().withhold_caller_number.get()).clone())
+		lazy_load!(self, withhold_caller_number)
 	}
 	
 	pub fn get_bridge(&self) -> CatapultResult<Option<Bridge>>{

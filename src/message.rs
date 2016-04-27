@@ -230,39 +230,21 @@ impl Message{
 		Ok(! try!(self.is_inbound()))
 	}
 	pub fn get_from(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().from.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().from.get()).clone())
+		lazy_load!(self, from)
 	}
 	pub fn get_to(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().to.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().to.get()).clone())
+		lazy_load!(self, to)
 	}
 	pub fn get_state(&self) -> CatapultResult<State>{
-		if !self.data.lock().unwrap().state.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().state.get()).clone())
+		lazy_load!(self, state)
 	}
 	pub fn get_text(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().text.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().text.get()).clone())
+		lazy_load!(self, text)
 	}
 	pub fn get_time(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().time.get()).clone())
+		lazy_load!(self, time)
 	}
 	pub fn get_media(&self) -> CatapultResult<Vec<Media>>{
-		if !self.data.lock().unwrap().media.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().media.get()).clone())
+		lazy_load!(self, media)
 	}
 }

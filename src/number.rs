@@ -183,64 +183,34 @@ impl<'a> Number<'a>{
 		self.client.clone()
 	}
 	pub fn get_name(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().name.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().name.get()).clone())
+		lazy_load!(self, name)
 	}
 	pub fn get_number(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().number.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().number.get()).clone())
+		lazy_load!(self, number)
 	}
 	pub fn get_national_number(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().national_number.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().national_number.get()).clone())
+		lazy_load!(self, national_number)
 	}
 	pub fn get_created_time(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().created_time.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().created_time.get()).clone())
+		lazy_load!(self, created_time)
 	}
 	pub fn get_city(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().city.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().city.get()).clone())
+		lazy_load!(self, city)
 	}
 	pub fn get_state(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().state.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().state.get()).clone())
+		lazy_load!(self, state)
 	}
 	pub fn get_price(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().price.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().price.get()).clone())
+		lazy_load!(self, price)
 	}
 	pub fn get_number_state(&self) -> CatapultResult<String>{
-		if !self.data.lock().unwrap().number_state.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().number_state.get()).clone())
+		lazy_load!(self, number_state)
 	}
 	pub fn get_application_id(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().application_id.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().application_id.get()).clone())
+		lazy_load!(self, application_id)
 	}
 	pub fn get_fallback_number(&self) -> CatapultResult<Option<String>>{
-		if !self.data.lock().unwrap().fallback_number.available(){
-			try!(self.load());
-		}
-		Ok(try!(self.data.lock().unwrap().fallback_number.get()).clone())
+		lazy_load!(self, fallback_number)
 	}
 	
 	/* Setters */
