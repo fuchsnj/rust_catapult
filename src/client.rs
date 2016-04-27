@@ -14,6 +14,7 @@ use environment::Environment;
 use domain::Domain;
 use call_event::CallEvent;
 use application::Application;
+use account::Account;
 use message::Message;
 use message_event::MessageEvent;
 use number::Number;
@@ -215,6 +216,11 @@ impl Client{
 	pub fn parse_call_event(&self, data: &str) -> CatapultResult<CallEvent>{
 		CallEvent::parse(self, data)
 	}
+	//Account
+	pub fn get_account(&self) -> Account{
+		Account::get(self)
+	}
+	
 	
 	// Application
 	pub fn build_application(&self, name: &str, call_url: &str, msg_url: &str) -> application::ApplicationBuilder{
