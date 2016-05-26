@@ -7,9 +7,9 @@ use util;
 use lazy::Lazy;
 use lazy::Lazy::*;
 use self::info::CallInfo;
-use rustc_serialize::json::Json;
-use rustc_serialize::json::ToJson;
+use rustc_serialize::json::{ToJson, Json};
 use voice::Voice;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug)]
 pub enum State{
@@ -18,6 +18,18 @@ pub enum State{
 	Active,
 	Completed,
 	Transferring
+}
+impl State{
+	pub fn to_string(&self) -> &'static str{
+		use self::State::*;
+		match *self{
+			Started => "started",
+			Rejected => "rejected",
+			Active => "active",
+			Completed => "completed",
+			Transferring => "transferring"
+		}
+	}
 }
 
 struct Data{
@@ -285,6 +297,66 @@ impl CallBuilder{
 	}
 }
 
+pub struct CallQuery{
+	client: Client,
+	from: Option<String>,
+	to: Option<String>,
+	page: u32,
+	size: u32,
+	state: Option<State>,
+	sort_order: String
+}
+impl CallQuery{
+	pub fn from(mut self, from: &str) -> CallQuery{
+		self.from = Some(from.to_string()); self 
+	}
+	pub fn to(mut self, to: &str) -> CallQuery{
+		self.to = Some(to.to_string()); self 
+	}
+	pub fn state(mut self, state: State) -> CallQuery{
+		self.state = Some(state); self
+	}
+	pub fn page(mut self, page: u32) -> CallQuery{
+		self.page = page; self
+	}
+	pub fn size(mut self, size: u32) -> CallQuery{
+		self.size = size; self
+	}
+	pub fn sort_desc(mut self) -> CallQuery{
+		self.sort_order = "desc".to_string(); self
+	}
+	pub fn submit(self) -> CatapultResult<Vec<Call>>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/calls";
+		
+		let mut map = BTreeMap::new();
+		if let Some(from) = self.from{
+			map.insert("from".to_string(), from.to_json());
+		}
+		if let Some(to) = self.to{
+			map.insert("to".to_string(), to.to_json());
+		}
+		if let Some(state) = self.state{
+			map.insert("state".to_string(), state.to_string().to_json());
+		}
+		map.insert("page".to_string(), self.page.to_json());
+		map.insert("size".to_string(), self.size.to_json());
+		map.insert("sort_order".to_string(), self.sort_order.to_json());
+		let json = Json::Object(map);
+		
+		let res:JsonResponse<Vec<CallInfo>> = try!(self.client.raw_get_request(&path, json, ()));
+		
+		let mut output = vec!();
+		for info in res.body{
+			output.push(Call{
+				id: info.id.clone(),
+				client: self.client.clone(),
+				data: Arc::new(Mutex::new(try!(Data::from_info(&info))))
+			});
+		}
+		Ok(output)
+	}
+}
+
 #[derive(Clone)]
 pub struct Call{
 	id: String,
@@ -300,7 +372,17 @@ impl Call{
 		*data = try!(Data::from_info(&res.body));
 		Ok(())
 	}
-
+	pub fn query(client: &Client) -> CallQuery{
+		CallQuery{
+			client: client.clone(),
+			from: None,
+			to: None,
+			page: 0,
+			size: 25,
+			state: None,
+			sort_order: "asc".to_string()
+		}
+	}
 	pub fn build(client: &Client, from: &str, to: &str) -> CallBuilder{
 		CallBuilder{
 			client: client.clone(),
@@ -535,5 +617,8 @@ impl Call{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/calls/" + &self.id + "/events/" + id;
 		let res:JsonResponse<Event> = try!(self.client.raw_get_request(&path, (), ()));
 		Ok(res.body)
+	}
+	pub fn get_end_time(&self) -> CatapultResult<Option<String>>{
+		lazy_load!(self, end_time)
 	}
 }

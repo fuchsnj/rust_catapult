@@ -6,7 +6,6 @@ use std::sync::{Arc, Mutex};
 use util;
 use call::Call;
 use self::info::BridgeInfo;
-use rustc_serialize::json::ToJson;
 
 pub struct Bridge{
 	id: String,
