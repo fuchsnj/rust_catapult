@@ -3,7 +3,6 @@ use client::{EmptyResponse, JsonResponse, Client};
 use std::sync::{Arc, Mutex};
 use lazy::Lazy;
 use lazy::Lazy::*;
-use rustc_serialize::json::ToJson;
 use util;
 use message_event::MessageEvent;
 use media::Media;

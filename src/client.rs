@@ -20,7 +20,7 @@ use message_event::MessageEvent;
 use number::Number;
 use media::{Media, ToBytes};
 use conference::{Conference, ConferenceBuilder};
-use call::{CallBuilder, Call};
+use call::{CallBuilder, Call, CallQuery};
 
 #[derive(Clone)]
 pub struct Client{
@@ -233,6 +233,9 @@ impl Client{
 	//Call
 	pub fn build_call(&self, from: &str, to: &str) -> CallBuilder{
 		Call::build(self, from, to)
+	}
+	pub fn query_calls(&self) -> CallQuery{
+		Call::query(self)
 	}
 	
 	//Conference
