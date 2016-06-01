@@ -13,19 +13,17 @@ pub fn get_id_from_location_header(headers: &header::Headers) -> CatapultResult<
 	}
 }
 pub fn get_next_link_from_headers(headers: &header::Headers) -> CatapultResult<Option<String>>{
-	let link = match headers.get_raw("link"){
-		Some(link) => {
-			let asdf = String::from_utf8_lossy(&link[0]);
-			match (asdf.find('<'), asdf.find('>')){
-				(Some(a), Some(b)) => {
-					Some(asdf[a+1..b].to_owned())
-				},
-				_ => None
+	if let Some(raw_header) = headers.get_raw("link"){
+		let header = String::from_utf8_lossy(&raw_header[0]);
+		for link in header.split(','){
+			if link.contains("rel=\"next\""){
+				if let (Some(a), Some(b)) = (link.find('<'), link.find('>')){
+					return Ok(Some(link[a+1..b].to_owned()))
+				}
 			}
-		},
-		None => None
-	};
-	Ok(link)
+		}
+	}
+	Ok(None)
 }
 pub fn get_id_from_location_url(url: &str) -> CatapultResult<String>{
 	let id = try!(

@@ -56,7 +56,6 @@ pub use auth_token::AuthToken;
 pub use error::CatapultError;
 pub use bridge::Bridge;
 pub use call::Call;
-pub use call::CallQuery;
 pub use call_event::CallEvent;
 pub use client::Client;
 pub use conference::Conference;
