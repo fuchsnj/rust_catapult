@@ -4,6 +4,6 @@ version = "0.2.0"
 authors = ["Nathan Fuchs <fuchsnj@gmail.com>"]
 
 [dependencies]
-hyper = "0.7"
+hyper = "0.9.6"
 rustc-serialize = "0.3"
-url = "0.5"
+url = "^1.0"

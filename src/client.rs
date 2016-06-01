@@ -15,12 +15,12 @@ use domain::Domain;
 use call_event::CallEvent;
 use application::Application;
 use account::Account;
-use message::Message;
 use message_event::MessageEvent;
 use number::Number;
 use media::{Media, ToBytes};
 use conference::{Conference, ConferenceBuilder};
 use call::{CallBuilder, Call, CallQuery};
+use message::{Message};
 
 #[derive(Clone)]
 pub struct Client{
@@ -121,9 +121,10 @@ impl Client{
 			}))
 		}
 	}
-	pub fn create_url(&self, path: &str) -> String{
+	pub fn make_absolute_url(&self, path: &str) -> CatapultResult<Url>{
 		let data = self.data.lock().unwrap();
-		data.environment.get_base_url() + "/" + &data.api_version + "/" + path 
+		let base = try!(Url::parse(&(data.environment.get_base_url() + "/" + &data.api_version + "/")));
+		Ok(try!(base.join(path)))
 	}
 	pub fn raw_delete_request<Params>(&self, path: &str, params: Params) -> CatapultResult<EmptyResponse>
 	where Params: json::ToJson{
@@ -165,9 +166,8 @@ impl Client{
 		Params: json::ToJson,
 		Type: FnOnce(& hyper::Client, Url) -> RequestBuilder
 	{
-		let mut url = try!(Url::parse(&self.create_url(path)));
+		let mut url = try!(self.make_absolute_url(path));
 		util::set_query_params_from_json(&mut url, &params.to_json());
-		
 		let client = hyper::Client::new();
 		let vec_body: Vec<u8> = body.to_body();
 		let req = 
@@ -188,6 +188,7 @@ impl Client{
 		}else{
 			let mut data = String::new();
 			try!(res.read_to_string(&mut data));
+			println!("res: {}", data);
 			Err(CatapultError::api_error(&data))
 		}
 	}
@@ -275,6 +276,9 @@ impl Client{
 	}
 	pub fn get_message(&self, id: &str) -> Message{
 		Message::get(self, id)
+	}
+	pub fn query_messages(&self) -> message::Query{
+		Message::query(self)
 	}
 	
 	// MessageEvent
