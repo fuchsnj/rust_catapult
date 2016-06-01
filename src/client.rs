@@ -9,7 +9,7 @@ use rustc_serialize::json::Json;
 use hyper::Url;
 use hyper::client::RequestBuilder;
 use std::sync::{Mutex, Arc};
-use {util, application, message};
+use {util, application, message, call};
 use environment::Environment;
 use domain::Domain;
 use call_event::CallEvent;
@@ -19,7 +19,7 @@ use message_event::MessageEvent;
 use number::Number;
 use media::{Media, ToBytes};
 use conference::{Conference, ConferenceBuilder};
-use call::{CallBuilder, Call, CallQuery};
+use call::{CallBuilder, Call};
 use message::{Message};
 
 #[derive(Clone)]
@@ -214,14 +214,10 @@ impl Client{
 	
 	/* Object Helpers */
 	
-	pub fn parse_call_event(&self, data: &str) -> CatapultResult<CallEvent>{
-		CallEvent::parse(self, data)
-	}
 	//Account
 	pub fn get_account(&self) -> Account{
 		Account::get(self)
 	}
-	
 	
 	// Application
 	pub fn build_application(&self, name: &str, call_url: &str, msg_url: &str) -> application::ApplicationBuilder{
@@ -235,8 +231,13 @@ impl Client{
 	pub fn build_call(&self, from: &str, to: &str) -> CallBuilder{
 		Call::build(self, from, to)
 	}
-	pub fn query_calls(&self) -> CallQuery{
+	pub fn query_calls(&self) -> call::Query{
 		Call::query(self)
+	}
+	
+	//CallEvent
+	pub fn parse_call_event(&self, data: &str) -> CatapultResult<CallEvent>{
+		CallEvent::parse(self, data)
 	}
 	
 	//Conference
