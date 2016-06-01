@@ -12,6 +12,21 @@ pub fn get_id_from_location_header(headers: &header::Headers) -> CatapultResult<
 		None => Err(CatapultError::unexpected("Location header not found"))
 	}
 }
+pub fn get_next_link_from_headers(headers: &header::Headers) -> CatapultResult<Option<String>>{
+	let link = match headers.get_raw("link"){
+		Some(link) => {
+			let asdf = String::from_utf8_lossy(&link[0]);
+			match (asdf.find('<'), asdf.find('>')){
+				(Some(a), Some(b)) => {
+					Some(asdf[a+1..b].to_owned())
+				},
+				_ => None
+			}
+		},
+		None => None
+	};
+	Ok(link)
+}
 pub fn get_id_from_location_url(url: &str) -> CatapultResult<String>{
 	let id = try!(
 		Path::new(url).file_name()
@@ -33,12 +48,9 @@ fn get_unquoted_value(json: &Json) -> String{
 
 pub fn set_query_params_from_json(url: &mut Url, json: &Json){
 	if let Some(json) = json.as_object(){
-		let vec:Vec<(String, String)> = json.iter().map(
-			|(x,y)|{
-				( x.to_string(), get_unquoted_value(y) )
-			}
-		).collect();
-		url.set_query_from_pairs(vec.iter().map(|&(ref x, ref y)| (&x[..], &y[..])));
+		for (key, value) in json.iter(){
+			url.query_pairs_mut().append_pair(key, &get_unquoted_value(value));
+		}
 	}
 }
 pub fn expect<T>(data: Option<T>, name: &str) -> CatapultResult<T>{
