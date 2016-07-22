@@ -220,6 +220,9 @@ impl Client{
 	}
 	
 	// Application
+	pub fn query_applications(&self) -> application::Query{
+		Application::query(self)
+	}
 	pub fn build_application(&self, name: &str, call_url: &str, msg_url: &str) -> application::ApplicationBuilder{
 		Application::build(self, name, call_url, msg_url)
 	}
