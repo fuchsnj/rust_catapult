@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use rustc_serialize::json::{Json, ToJson};
 use error::CatapultError;
 use self::info::ApplicationInfo;
+use rustc_serialize::json;
 
 
 struct Data{
@@ -21,11 +22,27 @@ struct Data{
 	callback_http_method: Lazy<Option<String>>,
 	auto_answer: Lazy<Option<bool>>
 }
+impl Data{
+	fn from_info(client: &Client, info: ApplicationInfo) -> CatapultResult<Data>{
+		Ok(Data{
+			name: Available(info.name),
+			incoming_call_url: Available(info.incomingCallUrl),
+			incoming_call_url_callback_timeout: Available(info.incomingCallUrlCallbackTimeout),
+			incoming_call_fallback_url: Available(info.incomingCallFallbackUrl),
+			incoming_message_url: Available(info.incomingMessageUrl),
+			incoming_message_url_callback_timeout: Available(info.incomingMessageUrlCallbackTimeout),
+			incoming_message_fallback_url: Available(info.incomingMessageFallbackUrl),
+			callback_http_method: Available(info.callbackHttpMethod),
+			auto_answer: Available(info.autoAnswer)
+		})
+	}
+}
 
 mod info{
 	#![allow(non_snake_case)]
 	#[derive(RustcEncodable, RustcDecodable, Clone)]
 	pub struct ApplicationInfo{
+		pub id: String,
 		pub name: String,
 		pub incomingCallUrl: Option<String>,
 		pub incomingCallUrlCallbackTimeout: Option<u64>,
@@ -103,6 +120,46 @@ impl ApplicationBuilder{
 	}
 }
 
+pub struct QueryResult{
+	client: Client,
+	data: Vec<Application>,
+	next_url: Option<String>
+}
+impl QueryResult{
+	pub fn get_applications(&self) -> &Vec<Application>{
+		&self.data
+	}
+	pub fn has_next(&self) -> bool{
+		self.next_url.is_some()
+	}
+	pub fn next(&self) -> Option<CatapultResult<QueryResult>>{
+		self.next_url.as_ref().map(|ref url|{
+			Application::list(&self.client, &url, ())
+		})
+	}
+}
+
+pub struct Query{
+	client: Client,
+	size: Option<u32>
+}
+impl Query{
+	pub fn size(mut self, size: u32) -> Query{
+		self.size = Some(size); self
+	}
+	pub fn submit(&self) -> CatapultResult<QueryResult>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/applications";
+	
+		let mut map = BTreeMap::new();
+		if let Some(size) = self.size{
+			map.insert("size".to_owned(), size.to_json());
+		}
+		let json = Json::Object(map);
+		Application::list(&self.client, &path, json)
+	}
+}
+
+
 
 pub struct Application{
 	id: String,
@@ -124,6 +181,34 @@ impl Application{
 			callback_http_method: "POST".to_owned(),
 			auto_answer: true
 		}
+	}
+	fn list<P: json::ToJson>(client: &Client, path: &str, params: P) -> CatapultResult<QueryResult>{
+		let res:JsonResponse<Vec<ApplicationInfo>> = try!(client.raw_get_request(&path, params, ()));
+		let mut output = vec!();
+		for info in res.body{
+			output.push(Application{
+				id: info.id.clone(),
+				client: client.clone(),
+				data: Arc::new(Mutex::new(try!(Data::from_info(&client, info))))
+			});
+		}
+		let next_url = try!(util::get_next_link_from_headers(&res.headers));
+		Ok(QueryResult{
+			client: client.clone(),
+			data: output,
+			next_url: next_url
+		})
+	}
+	pub fn query(client: &Client) -> Query{
+		Query{
+			client: client.clone(),
+			size: None
+		}
+	}
+	pub fn delete(&self) -> CatapultResult<()>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
+		let _:EmptyResponse = try!(self.client.raw_delete_request(&path, ()));
+		Ok(())
 	}
 	pub fn get(client: &Client, id: &str) -> Application{
 		Application{
@@ -151,15 +236,7 @@ impl Application{
 		let path = "users/".to_string() + &self.client.get_user_id() + "/applications/" + &self.id;
 		let res:JsonResponse<ApplicationInfo> = try!(self.client.raw_get_request(&path, (), ()));
 		let mut data = self.data.lock().unwrap();
-		data.name = Available(res.body.name);
-		data.incoming_call_url = Available(res.body.incomingCallUrl);
-		data.incoming_call_url_callback_timeout = Available(res.body.incomingCallUrlCallbackTimeout);
-		data.incoming_call_fallback_url = Available(res.body.incomingCallFallbackUrl);
-		data.incoming_message_url = Available(res.body.incomingMessageUrl);
-		data.incoming_message_url_callback_timeout = Available(res.body.incomingMessageUrlCallbackTimeout);
-		data.incoming_message_fallback_url = Available(res.body.incomingMessageFallbackUrl);
-		data.callback_http_method = Available(res.body.callbackHttpMethod);
-		data.auto_answer = Available(res.body.autoAnswer);
+		*data = try!(Data::from_info(&self.client, res.body));
 		Ok(())
 	}
 	pub fn save(&self) -> CatapultResult<()>{
