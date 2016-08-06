@@ -24,7 +24,8 @@ use message::{Message};
 
 #[derive(Clone)]
 pub struct Client{
-	data: Arc<Mutex<Data>>
+	data: Arc<Mutex<Data>>,
+	hyper_client: Arc<hyper::Client>
 }
 
 struct Data{
@@ -118,7 +119,8 @@ impl Client{
 				api_secret: api_secret.to_string(),
 				api_version: "v1".to_string(),
 				environment: Environment::Production
-			}))
+			})),
+			hyper_client: Arc::new(hyper::Client::new())
 		}
 	}
 	pub fn make_absolute_url(&self, path: &str) -> CatapultResult<Url>{
@@ -171,7 +173,7 @@ impl Client{
 		let client = hyper::Client::new();
 		let vec_body: Vec<u8> = body.to_body();
 		let req = 
-			req_type(&client, url)
+			req_type(&self.hyper_client, url)
 			.header(Authorization(Basic{
 				username: self.get_api_token(),
 				password: Some(self.get_api_secret())
@@ -275,8 +277,12 @@ impl Client{
 	}
 	
 	// Message
-	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::MessageBuilder{
+	pub fn build_message(&self, from: &str, to: &str, text: &str) -> message::PendingMessage{
 		Message::build(self, from, to, text)
+	}
+	pub fn batch_send_messages<I>(&self, iter: I) -> CatapultResult<Vec<CatapultResult<Message>>>
+	where I: IntoIterator<Item = message::PendingMessage>{
+		message::PendingMessage::batch_send(self, iter)
 	}
 	pub fn get_message(&self, id: &str) -> Message{
 		Message::get(self, id)
