@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 use rustc_serialize::json::{ToJson, Json};
 use rustc_serialize::json;
 
+
 pub struct QueryResult{
 	client: Client,
 	data: Vec<Message>,
@@ -32,6 +33,9 @@ impl QueryResult{
 
 mod info{
 	#![allow(non_snake_case)]
+	use error::ApiError;
+	
+	
 	#[derive(RustcDecodable)]
 	pub struct MessageInfo{
 		pub id: String,
@@ -42,6 +46,13 @@ mod info{
 		pub text: String,
 		pub time: String,
 		pub media: Option<Vec<String>>
+	}
+	
+	#[derive(RustcDecodable, Debug)]
+	pub struct BatchMessageInfo{
+		pub result: String,
+		pub location: Option<String>,
+		pub error: Option<ApiError>
 	}
 }
 
@@ -166,7 +177,7 @@ impl Query{
 		get_message_list(&self.client, &path, json)
 	}
 }
-pub struct MessageBuilder{
+pub struct PendingMessage{
 	client: Client,
 	from: String,
 	to: String,
@@ -179,14 +190,15 @@ pub struct MessageBuilder{
 	fallback_url: Option<String>,
 	tag: Option<String>
 }
-impl MessageBuilder{
+impl PendingMessage{
 	pub fn media(mut self, url: &str) -> Self{
 		self.media.push(url.to_owned()); self
 	}
 	pub fn request_receipt(mut self) -> Self{
 		self.receipt_requested = true; self
 	}
-	pub fn callback_url(mut self, url: &str) -> Self{
+	pub fn callback_url(mut 
+	self, url: &str) -> Self{
 		self.callback_url = Some(url.to_owned()); self
 	}
 	pub fn use_get_http_method(mut self) -> Self{
@@ -201,9 +213,8 @@ impl MessageBuilder{
 	pub fn tag(mut self, tag: &str) -> Self{
 		self.tag = Some(tag.to_owned()); self
 	}
-	pub fn create(self) -> CatapultResult<Message>{
-		let path = "users/".to_string() + &self.client.get_user_id() + "/messages";
-		let json = json!({
+	fn to_json(&self) -> Json{
+		json!({
 			"from" => (self.from),
 			"to" => (self.to),
 			"text" => (self.text),
@@ -214,8 +225,11 @@ impl MessageBuilder{
 			"callbackTimeout" => (self.callback_timeout),
 			"fallbackUrl" => (self.fallback_url),
 			"tag" => (self.tag)
-		});
-		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &json));
+		})
+	}
+	pub fn create(self) -> CatapultResult<Message>{
+		let path = "users/".to_string() + &self.client.get_user_id() + "/messages";
+		let res:EmptyResponse = try!(self.client.raw_post_request(&path, (), &self.to_json()));
 		let id = try!(util::get_id_from_location_header(&res.headers));
 		Ok(Message{
 			id: id,
@@ -230,6 +244,41 @@ impl MessageBuilder{
 				media: NotLoaded
 			}))
 		})
+	}
+	pub fn batch_send<I>(client: &Client, messages: I) -> CatapultResult<Vec<CatapultResult<Message>>>
+	where I: IntoIterator<Item = PendingMessage>{
+		let messages:Vec<PendingMessage> = messages.into_iter().collect();
+		let mut msg_list = vec!();
+		for msg in messages.iter(){
+			msg_list.push(msg.to_json());
+		}
+		let json = Json::Array(msg_list);
+		let path = "users/".to_string() + &client.get_user_id() + "/messages";
+		let res:JsonResponse<Vec<info::BatchMessageInfo>> = try!(client.raw_post_request(&path, (), &json));
+		
+		let mut output = vec!();
+		for (msg, info) in messages.iter().zip(res.body){
+			if let Some(location) = info.location{
+				let id = try!(util::get_id_from_location_url(&location));
+				output.push(Ok(Message{
+					id: id,
+					client: client.clone(),
+					data: Arc::new(Mutex::new(Data{
+						inbound: Available(false),
+						from: Available(msg.from.clone()),
+						to: Available(msg.to.clone()),
+						state: NotLoaded,
+						text: Available(msg.text.clone()),
+						time: NotLoaded,
+						media: NotLoaded
+					}))
+				}))
+			}else if let Some(err) = info.error{
+				output.push(Err(CatapultError::ApiError(err)));
+			}
+		}
+		
+		Ok(output)
 	}
 }
 
@@ -280,8 +329,8 @@ pub struct Message{
 	data: Arc<Mutex<Data>>
 }
 impl Message{
-	pub fn build(client: &Client, from: &str, to: &str, text: &str) -> MessageBuilder{
-		MessageBuilder{
+	pub fn build(client: &Client, from: &str, to: &str, text: &str) -> PendingMessage{
+		PendingMessage{
 			client: client.clone(),
 			from: from.to_owned(),
 			to: to.to_owned(),
