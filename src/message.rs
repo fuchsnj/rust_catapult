@@ -183,7 +183,7 @@ pub struct PendingMessage{
 	to: String,
 	text: String,
 	media: Vec<String>,
-	receipt_requested: bool,
+	receipt_requested: String,
 	callback_url: Option<String>,
 	callback_http_method: String,
 	callback_timeout: Option<u64>,
@@ -195,7 +195,7 @@ impl PendingMessage{
 		self.media.push(url.to_owned()); self
 	}
 	pub fn request_receipt(mut self) -> Self{
-		self.receipt_requested = true; self
+		self.receipt_requested = "all".to_owned(); self
 	}
 	pub fn callback_url(mut 
 	self, url: &str) -> Self{
@@ -336,7 +336,7 @@ impl Message{
 			to: to.to_owned(),
 			text: text.to_owned(),
 			media: vec!(),
-			receipt_requested: false,
+			receipt_requested: "none".to_owned(),
 			callback_url: None,
 			callback_http_method: "POST".to_owned(),
 			callback_timeout: None,
