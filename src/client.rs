@@ -21,6 +21,7 @@ use media::{Media, ToBytes};
 use conference::{Conference, ConferenceBuilder};
 use call::{CallBuilder, Call};
 use message::{Message};
+use hyper::client::pool::Config;
 
 #[derive(Clone)]
 pub struct Client{
@@ -120,7 +121,7 @@ impl Client{
 				api_version: "v1".to_string(),
 				environment: Environment::Production
 			})),
-			hyper_client: Arc::new(hyper::Client::new())
+			hyper_client: Arc::new(hyper::Client::with_pool_config(Config{max_idle: 1024*4}))
 		}
 	}
 	pub fn make_absolute_url(&self, path: &str) -> CatapultResult<Url>{
@@ -170,7 +171,6 @@ impl Client{
 	{
 		let mut url = try!(self.make_absolute_url(path));
 		util::set_query_params_from_json(&mut url, &params.to_json());
-		let client = hyper::Client::new();
 		let vec_body: Vec<u8> = body.to_body();
 		let req = 
 			req_type(&self.hyper_client, url)
